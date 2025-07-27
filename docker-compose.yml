@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  auth-db:
+    image: postgres:14.18-bookworm
+    container_name: upfound_server
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: shivam2003
+      POSTGRES_DB: upfound_test_db  
+    ports:
+      - "5432:5432"
+    volumes:
+      - upfound_test_db:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  upfound_test_db:

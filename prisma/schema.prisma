@@ -1,0 +1,258 @@
+generator client {
+    provider        = "prisma-client-js"
+    previewFeatures = ["multiSchema", "views"]
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+    schemas  = ["users", "jobseeker", "admin"]
+}
+
+model User {
+    id               String     @id @default(uuid())
+    email            String     @unique
+    phoneNumber      String?    @unique
+    createdAt        DateTime   @default(now())
+    updatedAt        DateTime   @updatedAt
+    jobSeekerProfile JobSeeker?
+    role             UserRole?
+
+    @@schema("users")
+}
+
+// =================== JOBSEEKER =======================
+
+model JobSeeker {
+    id                    String                       @id @default(uuid())
+    userId                String                       @unique
+    user                  User                         @relation(fields: [userId], references: [id])
+    name                  String
+    age                   Int?
+    bio                   String?
+    profilePicture        String?
+    primaryInterest       PrimaryInterest?
+    location              String?
+    tagline               String?
+    isPhoneNumberVerified Boolean                      @default(false)
+    status                JobSeekerStatus?
+    profileView           Int                          @default(0)
+    searchView            Int                          @default(0)
+    gender                String?
+    projectLinks          JobSeekerProjectLink?
+    technicalProfile      JobSeekerTechnicalProfile?
+    workExperience        JobSeekerWorkExperience?
+    preferences           JobSeekerPreferences?
+    education             JobSeekerEducation?
+    documents             JobSeekerDocument[]
+    culturePreferences    JobSeekerCulturePreferences?
+    createdAt             DateTime                     @default(now())
+    updatedAt             DateTime                     @updatedAt
+
+    @@index([isPhoneNumberVerified])
+    @@index([status])
+    @@index([profileView])
+    @@index([searchView])
+    @@index([location])
+    @@schema("jobseeker")
+}
+
+model JobSeekerProjectLink {
+    id          String    @id @default(uuid())
+    jobSeeker   JobSeeker @relation(fields: [jobSeekerId], references: [id])
+    jobSeekerId String    @unique
+    projectLink String[]
+
+    @@schema("jobseeker")
+}
+
+model JobSeekerTechnicalProfile {
+    id                String                   @id @default(uuid())
+    jobSeeker         JobSeeker                @relation(fields: [jobSeekerId], references: [id])
+    jobSeekerId       String                   @unique
+    desiredRoles      String[]
+    skills            String[]
+    certifications    JobSeekerCertification[]
+    yearsOfExperience String?
+    createdAt         DateTime                 @default(now())
+    updatedAt         DateTime                 @updatedAt
+
+    @@schema("jobseeker")
+}
+
+model JobSeekerCertification {
+    id                 String                    @id @default(uuid())
+    name               String
+    institution        String
+    graduationYear     Int
+    technicalProfile   JobSeekerTechnicalProfile @relation(fields: [technicalProfileId], references: [id], onDelete: Cascade)
+    technicalProfileId String
+
+    @@schema("jobseeker")
+}
+
+model JobSeekerWorkExperience {
+    id              String                @id @default(uuid())
+    jobSeeker       JobSeeker             @relation(fields: [jobSeekerId], references: [id])
+    jobSeekerId     String                @unique
+    workExperiences JobSeekerExperience[]
+    createdAt       DateTime              @default(now())
+    updatedAt       DateTime              @updatedAt
+
+    @@schema("jobseeker")
+}
+
+model JobSeekerExperience {
+    id                  String                  @id @default(uuid())
+    workExperienceGroup JobSeekerWorkExperience @relation(fields: [groupId], references: [id])
+    groupId             String
+    title               String
+    employmentType      String
+    company             String
+    startMonth          Int?
+    startYear           Int?
+    endMonth            Int?
+    endYear             Int?
+
+    @@schema("jobseeker")
+}
+
+model JobSeekerPreferences {
+    id                     String                 @id @default(uuid())
+    jobSeeker              JobSeeker              @relation(fields: [jobSeekerId], references: [id])
+    jobSeekerId            String                 @unique
+    activelyLooking        ActivelyLookingStatus
+    workArrangement        WorkArrangement
+    startupStagePreference StartupStagePreference
+    jobType                JobType
+    createdAt              DateTime               @default(now())
+    updatedAt              DateTime               @updatedAt
+
+    @@schema("jobseeker")
+}
+
+model JobSeekerEducation {
+    id          String                   @id @default(uuid())
+    jobSeeker   JobSeeker                @relation(fields: [jobSeekerId], references: [id])
+    jobSeekerId String                   @unique
+    education   JobSeekerEducationItem[]
+    createdAt   DateTime                 @default(now())
+    updatedAt   DateTime                 @updatedAt
+
+    @@schema("jobseeker")
+}
+
+model JobSeekerEducationItem {
+    id             String             @id @default(uuid())
+    degree         String
+    institution    String
+    graduationYear Int?
+    education      JobSeekerEducation @relation(fields: [educationId], references: [id])
+    educationId    String
+
+    @@schema("jobseeker")
+}
+
+model JobSeekerDocument {
+    id           String       @id @default(uuid())
+    jobSeeker    JobSeeker    @relation(fields: [jobSeekerId], references: [id])
+    jobSeekerId  String
+    documentUrl  String
+    documentType DocumentType @default(RESUME)
+    fileType     String
+    createdAt    DateTime     @default(now())
+    updatedAt    DateTime     @updatedAt
+
+    @@schema("jobseeker")
+}
+
+model JobSeekerCulturePreferences {
+    id                       String    @id @default(uuid())
+    jobSeeker                JobSeeker @relation(fields: [jobSeekerId], references: [id])
+    jobSeekerId              String    @unique
+    nextJobGoals             String?
+    workMotivation           String?
+    workStylePreference      String?
+    preferredWorkEnvironment String?
+    createdAt                DateTime  @default(now())
+    updatedAt                DateTime  @updatedAt
+
+    @@schema("jobseeker")
+}
+
+enum PrimaryInterest {
+    TECH_DEVELOPER_ENGINEER
+    PRODUCT_MANAGEMENT
+    UI_UX_DESIGN
+    MARKETING_GROWTH
+    SALES_BD
+    HR_TALENT
+    OPERATIONS
+    FINANCE
+    LEGAL_COMPLIANCE
+    CONTENT_COPYWRITING
+    GENERALIST
+
+    @@schema("jobseeker")
+}
+
+enum JobSeekerStatus {
+    ACTIVE
+    INACTIVE
+    BANNED
+
+    @@schema("jobseeker")
+}
+
+enum ActivelyLookingStatus {
+    ACTIVELY_LOOKING
+    OPEN_TO_WORK
+    NOT_LOOKING_NOW
+
+    @@schema("jobseeker")
+}
+
+enum WorkArrangement {
+    REMOTE
+    HYBRID
+    ON_SITE
+
+    @@schema("jobseeker")
+}
+
+enum StartupStagePreference {
+    EARLY_STAGE
+    GROWTH_STAGE
+    MATURE_STAGE
+
+    @@schema("jobseeker")
+}
+
+enum JobType {
+    INTERNSHIPS
+    FULL_TIME
+    FREELANCE
+    PART_TIME
+    CO_FOUNDER
+    ADVISOR_MENTOR
+
+    @@schema("jobseeker")
+}
+
+enum DocumentType {
+    RESUME
+    COVER_LETTER
+    PORTFOLIO
+
+    @@schema("jobseeker")
+}
+
+enum UserRole {
+    JOBSEEKER
+    RECRUITER
+    ADMIN
+
+    @@schema("users")
+}
+
+// ==================== ADMIN ====================
