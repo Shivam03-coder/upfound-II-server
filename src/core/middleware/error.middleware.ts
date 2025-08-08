@@ -1,4 +1,4 @@
-import { AppError } from "@src/utils/error.utils";
+import { AppError } from "@src/common/utils/error.utils";
 import { Request, Response, NextFunction, ErrorRequestHandler } from "express";
 
 export const errorMiddleware: ErrorRequestHandler = (

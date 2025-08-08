@@ -1,9 +1,9 @@
-import { envs } from "@src/configs/envs.config";
-import { db } from "@src/database";
-import { SessionUser } from "@src/types/global.types";
-import { ApiResponse } from "@src/utils/api.utils";
+import { envs } from "@src/common/configs/envs.config";
+import { SessionUser } from "@src/common/types/global.types";
+import { ApiResponse } from "@src/common/utils/api.utils";
 import { NextFunction, Request, Response } from "express";
 import jwt, { JsonWebTokenError } from "jsonwebtoken";
+import { db } from "../database";
 
 export const requireAuth = async (
   req: Request,

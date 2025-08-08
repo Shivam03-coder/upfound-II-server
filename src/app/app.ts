@@ -11,9 +11,9 @@ import helmet from "helmet";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import { Server } from "http";
-import { envs } from "./configs/envs.config";
-import { routes } from "./routes/root.route";
-import { errorMiddleware } from "./middleware/error.middleware";
+import { envs } from "@src/common/configs/envs.config";
+import { routes } from "@src/core/routes/root.route";
+import { errorMiddleware } from "@src/core/middleware/error.middleware";
 
 interface AppOptions {
   port?: number;

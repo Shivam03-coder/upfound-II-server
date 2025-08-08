@@ -1,27 +1,24 @@
 generator client {
-    provider        = "prisma-client-js"
-    previewFeatures = ["multiSchema", "views"]
+    provider = "prisma-client-js"
 }
 
 datasource db {
     provider = "postgresql"
     url      = env("DATABASE_URL")
-    schemas  = ["users", "jobseeker", "admin"]
 }
 
 model User {
-    id               String     @id @default(uuid())
-    email            String     @unique
-    phoneNumber      String?    @unique
-    createdAt        DateTime   @default(now())
-    updatedAt        DateTime   @updatedAt
+    id               String       @id @default(uuid())
+    email            String       @unique
+    phoneNumber      String?      @unique
+    createdAt        DateTime     @default(now())
+    updatedAt        DateTime     @updatedAt
     jobSeekerProfile JobSeeker?
     role             UserRole?
-
-    @@schema("users")
+    Post             Post[]
+    EntityLike       EntityLike[]
+    Comment          Comment[]
 }
-
-// =================== JOBSEEKER =======================
 
 model JobSeeker {
     id                    String                       @id @default(uuid())
@@ -54,7 +51,6 @@ model JobSeeker {
     @@index([profileView])
     @@index([searchView])
     @@index([location])
-    @@schema("jobseeker")
 }
 
 model JobSeekerProjectLink {
@@ -62,8 +58,6 @@ model JobSeekerProjectLink {
     jobSeeker   JobSeeker @relation(fields: [jobSeekerId], references: [id])
     jobSeekerId String    @unique
     projectLink String[]
-
-    @@schema("jobseeker")
 }
 
 model JobSeekerTechnicalProfile {
@@ -76,8 +70,6 @@ model JobSeekerTechnicalProfile {
     yearsOfExperience String?
     createdAt         DateTime                 @default(now())
     updatedAt         DateTime                 @updatedAt
-
-    @@schema("jobseeker")
 }
 
 model JobSeekerCertification {
@@ -87,8 +79,6 @@ model JobSeekerCertification {
     graduationYear     Int
     technicalProfile   JobSeekerTechnicalProfile @relation(fields: [technicalProfileId], references: [id], onDelete: Cascade)
     technicalProfileId String
-
-    @@schema("jobseeker")
 }
 
 model JobSeekerWorkExperience {
@@ -98,8 +88,6 @@ model JobSeekerWorkExperience {
     workExperiences JobSeekerExperience[]
     createdAt       DateTime              @default(now())
     updatedAt       DateTime              @updatedAt
-
-    @@schema("jobseeker")
 }
 
 model JobSeekerExperience {
@@ -113,8 +101,6 @@ model JobSeekerExperience {
     startYear           Int?
     endMonth            Int?
     endYear             Int?
-
-    @@schema("jobseeker")
 }
 
 model JobSeekerPreferences {
@@ -127,8 +113,6 @@ model JobSeekerPreferences {
     jobType                JobType
     createdAt              DateTime               @default(now())
     updatedAt              DateTime               @updatedAt
-
-    @@schema("jobseeker")
 }
 
 model JobSeekerEducation {
@@ -138,8 +122,6 @@ model JobSeekerEducation {
     education   JobSeekerEducationItem[]
     createdAt   DateTime                 @default(now())
     updatedAt   DateTime                 @updatedAt
-
-    @@schema("jobseeker")
 }
 
 model JobSeekerEducationItem {
@@ -149,8 +131,6 @@ model JobSeekerEducationItem {
     graduationYear Int?
     education      JobSeekerEducation @relation(fields: [educationId], references: [id])
     educationId    String
-
-    @@schema("jobseeker")
 }
 
 model JobSeekerDocument {
@@ -162,8 +142,6 @@ model JobSeekerDocument {
     fileType     String
     createdAt    DateTime     @default(now())
     updatedAt    DateTime     @updatedAt
-
-    @@schema("jobseeker")
 }
 
 model JobSeekerCulturePreferences {
@@ -176,8 +154,6 @@ model JobSeekerCulturePreferences {
     preferredWorkEnvironment String?
     createdAt                DateTime  @default(now())
     updatedAt                DateTime  @updatedAt
-
-    @@schema("jobseeker")
 }
 
 enum PrimaryInterest {
@@ -192,40 +168,30 @@ enum PrimaryInterest {
     LEGAL_COMPLIANCE
     CONTENT_COPYWRITING
     GENERALIST
-
-    @@schema("jobseeker")
 }
 
 enum JobSeekerStatus {
     ACTIVE
     INACTIVE
     BANNED
-
-    @@schema("jobseeker")
 }
 
 enum ActivelyLookingStatus {
     ACTIVELY_LOOKING
     OPEN_TO_WORK
     NOT_LOOKING_NOW
-
-    @@schema("jobseeker")
 }
 
 enum WorkArrangement {
     REMOTE
     HYBRID
     ON_SITE
-
-    @@schema("jobseeker")
 }
 
 enum StartupStagePreference {
     EARLY_STAGE
     GROWTH_STAGE
     MATURE_STAGE
-
-    @@schema("jobseeker")
 }
 
 enum JobType {
@@ -235,24 +201,119 @@ enum JobType {
     PART_TIME
     CO_FOUNDER
     ADVISOR_MENTOR
-
-    @@schema("jobseeker")
 }
 
 enum DocumentType {
     RESUME
     COVER_LETTER
     PORTFOLIO
-
-    @@schema("jobseeker")
 }
 
 enum UserRole {
     JOBSEEKER
     RECRUITER
     ADMIN
-
-    @@schema("users")
 }
 
-// ==================== ADMIN ====================
+// ======================== COMMUNITY SECTION ========================
+
+model Post {
+    id           Int           @id @default(autoincrement())
+    content      String        @db.VarChar(5000)
+    community    CommunityType
+    createdAt    DateTime      @default(now())
+    updatedAt    DateTime      @updatedAt
+    likeCount    Int           @default(0)
+    commentCount Int           @default(0)
+
+    userId String
+    user   User   @relation(fields: [userId], references: [id])
+
+    media    PostMedia[]
+    comments Comment[]
+
+    @@index([userId])
+    @@index([community])
+    @@index([createdAt])
+    @@map("posts")
+}
+
+model PostMedia {
+    id        String        @id @default(uuid())
+    url       String
+    mediaType PostMediaType
+    postId    Int
+    post      Post          @relation(fields: [postId], references: [id])
+
+    @@index([postId])
+    @@map("posts_media")
+}
+
+model Comment {
+    id        String   @id @default(uuid())
+    message   String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    likeCount Int      @default(0)
+    postId    Int
+    post      Post     @relation(fields: [postId], references: [id])
+    userId    String
+    user      User     @relation(fields: [userId], references: [id])
+
+    @@index([postId])
+    @@index([userId])
+    @@index([createdAt])
+    @@map("post_comments")
+}
+
+model EntityLike {
+    id         String     @id @default(uuid())
+    entityId   String
+    entityType EntityType
+    likedAt    DateTime   @default(now())
+    userId     String
+    user       User       @relation(fields: [userId], references: [id])
+
+    @@unique([entityId, entityType, userId])
+    @@index([entityId, entityType])
+    @@index([userId])
+    @@index([likedAt])
+    @@map("entity_likes")
+}
+
+enum CommunityType {
+    FINTECH
+    HEALTHTECH
+    AGRITECH
+    D2C_ECOMMERCE
+    EDTECH
+    AI_ML_DEEPTECH
+    HR_TECH
+    CREATOR_ECONOMY
+    CLIMATE_TECH
+    SAAS
+    WEB3_BLOCKCHAIN
+    OTHER_DOMAINS
+    BANGALORE_STARTUPS
+    PUNE_STARTUPS
+    DELHI_NCR_STARTUPS
+    TIER2_CITY_STARTUPS
+    REMOTE_GLOBAL_STARTUPS
+    ASKUP
+    IDEA2GO
+    STARTFIRST
+    PROOFZONE
+    BUILDCORE
+    SCALEMODE
+    PITCHPLAY
+}
+
+enum PostMediaType {
+    IMAGE
+    VIDEO
+}
+
+enum EntityType {
+    POST
+    COMMENT
+}

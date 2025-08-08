@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { AuthError } from "./error.utils";
-import { db } from "@src/database";
+import { db } from "@src/core/database";
 
 export const AsyncHandler = (
   asyncFunction: (

@@ -1,11 +1,11 @@
-import { db } from "@src/database";
-import { ApiResponse, AsyncHandler, getAuth } from "@src/utils/api.utils";
-import { AuthError, DatabaseError } from "@src/utils/error.utils";
 import { Request, Response } from "express";
 import AuthServices from "./auth.service";
 import { UserAuthData } from "./auth.dto.types";
-import TokenService from "@src/libs/jwt-token";
-import { getCookieOptions } from "@src/utils/cookie.util";
+import { ApiResponse, AsyncHandler } from "@src/common/utils/api.utils";
+import { db } from "@src/core/database";
+import TokenService from "@src/common/libs/jwt-token";
+import { getCookieOptions } from "@src/common/utils/cookie.util";
+import { AuthError } from "@src/common/utils/error.utils";
 
 export class AuthController {
   public static oAuthLoginHandler = AsyncHandler(
