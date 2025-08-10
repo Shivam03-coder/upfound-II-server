@@ -1,10 +1,10 @@
-import { envs } from "@src/configs/envs.config";
 import { Response } from "express";
-import { AuthError, ValidationError } from "@src/utils/error.utils";
 import jwt, { JsonWebTokenError } from "jsonwebtoken";
-import { SessionUser } from "@src/types/global.types";
-import { db } from "@src/database";
-import { getCookieOptions } from "@src/utils/cookie.util";
+import { envs } from "../configs/envs.config";
+import { SessionUser } from "../types/global.types";
+import { db } from "@src/core/database";
+import { AuthError } from "../utils/error.utils";
+import { getCookieOptions } from "../utils/cookie.util";
 
 class TokenService {
   private static accessSecret = envs.ACCESS_TOKEN_SECRET || "access-secret-key";

@@ -1,6 +1,6 @@
-import admin from "@src/configs/firebase.config";
-import { ValidationError } from "@src/utils/error.utils";
+import admin from "@src/common/configs/firebase.config";
 import { IoauthData } from "./auth.dto.types";
+import { ValidationError } from "@src/common/utils/error.utils";
 
 class AuthServices {
   public static async firebaseAuthLogin(idToken: string): Promise<IoauthData> {

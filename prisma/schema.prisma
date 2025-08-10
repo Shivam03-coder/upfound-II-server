@@ -227,7 +227,7 @@ model Post {
     commentCount Int           @default(0)
 
     userId String
-    user   User   @relation(fields: [userId], references: [id])
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     media    PostMedia[]
     comments Comment[]
@@ -242,8 +242,8 @@ model PostMedia {
     id        String        @id @default(uuid())
     url       String
     mediaType PostMediaType
-    postId    Int
-    post      Post          @relation(fields: [postId], references: [id])
+    postId    Int?
+    post      Post?         @relation(fields: [postId], references: [id], onDelete: Cascade)
 
     @@index([postId])
     @@map("posts_media")
@@ -256,9 +256,9 @@ model Comment {
     updatedAt DateTime @updatedAt
     likeCount Int      @default(0)
     postId    Int
-    post      Post     @relation(fields: [postId], references: [id])
+    post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
     userId    String
-    user      User     @relation(fields: [userId], references: [id])
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@index([postId])
     @@index([userId])
@@ -272,7 +272,7 @@ model EntityLike {
     entityType EntityType
     likedAt    DateTime   @default(now())
     userId     String
-    user       User       @relation(fields: [userId], references: [id])
+    user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@unique([entityId, entityType, userId])
     @@index([entityId, entityType])
