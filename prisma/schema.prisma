@@ -9,6 +9,7 @@ datasource db {
 
 model User {
     id               String       @id @default(uuid())
+    name             String
     email            String       @unique
     phoneNumber      String?      @unique
     createdAt        DateTime     @default(now())
@@ -18,13 +19,15 @@ model User {
     Post             Post[]
     EntityLike       EntityLike[]
     Comment          Comment[]
+
+    @@map("users")
 }
 
 model JobSeeker {
     id                    String                       @id @default(uuid())
     userId                String                       @unique
     user                  User                         @relation(fields: [userId], references: [id])
-    name                  String
+    gender                String?
     age                   Int?
     bio                   String?
     profilePicture        String?
@@ -35,7 +38,6 @@ model JobSeeker {
     status                JobSeekerStatus?
     profileView           Int                          @default(0)
     searchView            Int                          @default(0)
-    gender                String?
     projectLinks          JobSeekerProjectLink?
     technicalProfile      JobSeekerTechnicalProfile?
     workExperience        JobSeekerWorkExperience?
@@ -51,6 +53,7 @@ model JobSeeker {
     @@index([profileView])
     @@index([searchView])
     @@index([location])
+    @@map("job_seekers")
 }
 
 model JobSeekerProjectLink {
@@ -58,6 +61,8 @@ model JobSeekerProjectLink {
     jobSeeker   JobSeeker @relation(fields: [jobSeekerId], references: [id])
     jobSeekerId String    @unique
     projectLink String[]
+
+    @@map("job_seeker_project_link")
 }
 
 model JobSeekerTechnicalProfile {
@@ -70,6 +75,8 @@ model JobSeekerTechnicalProfile {
     yearsOfExperience String?
     createdAt         DateTime                 @default(now())
     updatedAt         DateTime                 @updatedAt
+
+    @@map("job_seeker_technical_profile")
 }
 
 model JobSeekerCertification {
@@ -79,6 +86,8 @@ model JobSeekerCertification {
     graduationYear     Int
     technicalProfile   JobSeekerTechnicalProfile @relation(fields: [technicalProfileId], references: [id], onDelete: Cascade)
     technicalProfileId String
+
+    @@map("job_seeker_certifications")
 }
 
 model JobSeekerWorkExperience {
@@ -88,12 +97,14 @@ model JobSeekerWorkExperience {
     workExperiences JobSeekerExperience[]
     createdAt       DateTime              @default(now())
     updatedAt       DateTime              @updatedAt
+
+    @@map("job_seeker_work_experience")
 }
 
 model JobSeekerExperience {
     id                  String                  @id @default(uuid())
-    workExperienceGroup JobSeekerWorkExperience @relation(fields: [groupId], references: [id])
     groupId             String
+    workExperienceGroup JobSeekerWorkExperience @relation(fields: [groupId], references: [id])
     title               String
     employmentType      String
     company             String
@@ -101,6 +112,8 @@ model JobSeekerExperience {
     startYear           Int?
     endMonth            Int?
     endYear             Int?
+
+    @@map("job_seeker_experience")
 }
 
 model JobSeekerPreferences {
@@ -113,6 +126,8 @@ model JobSeekerPreferences {
     jobType                JobType
     createdAt              DateTime               @default(now())
     updatedAt              DateTime               @updatedAt
+
+    @@map("job_seeker_preferences")
 }
 
 model JobSeekerEducation {
@@ -122,6 +137,8 @@ model JobSeekerEducation {
     education   JobSeekerEducationItem[]
     createdAt   DateTime                 @default(now())
     updatedAt   DateTime                 @updatedAt
+
+    @@map("job_seeker_education")
 }
 
 model JobSeekerEducationItem {
@@ -131,6 +148,8 @@ model JobSeekerEducationItem {
     graduationYear Int?
     education      JobSeekerEducation @relation(fields: [educationId], references: [id])
     educationId    String
+
+    @@map("job_seeker_education_item")
 }
 
 model JobSeekerDocument {
@@ -142,6 +161,8 @@ model JobSeekerDocument {
     fileType     String
     createdAt    DateTime     @default(now())
     updatedAt    DateTime     @updatedAt
+
+    @@map("job_seeker_documents")
 }
 
 model JobSeekerCulturePreferences {
@@ -154,6 +175,8 @@ model JobSeekerCulturePreferences {
     preferredWorkEnvironment String?
     createdAt                DateTime  @default(now())
     updatedAt                DateTime  @updatedAt
+
+    @@map("job_seeker_culture_preferences")
 }
 
 enum PrimaryInterest {
@@ -171,9 +194,9 @@ enum PrimaryInterest {
 }
 
 enum JobSeekerStatus {
-    ACTIVE
-    INACTIVE
-    BANNED
+    FRESHER
+    EXPERIENCED
+    INTERN
 }
 
 enum ActivelyLookingStatus {

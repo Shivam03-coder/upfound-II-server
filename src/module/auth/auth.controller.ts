@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import AuthServices from "./auth.service";
-import { UserAuthData } from "./auth.dto.types";
+import { UserAuthData } from "./auth.dto.";
 import { ApiResponse, AsyncHandler } from "@src/common/utils/api.utils";
 import { db } from "@src/core/database";
 import TokenService from "@src/common/libs/jwt-token";
@@ -29,6 +29,7 @@ export class AuthController {
           data: {
             email,
             role,
+            name,
           },
         });
 
@@ -36,7 +37,6 @@ export class AuthController {
           await tx.jobSeeker.create({
             data: {
               userId: newUser.id,
-              name,
               profilePicture: picture,
             },
           });
@@ -90,8 +90,12 @@ export class AuthController {
         userInfo = await db.jobSeeker.findUnique({
           where: { userId: user.id },
           select: {
-            name: true,
             profilePicture: true,
+            user: {
+              select: {
+                name: true,
+              },
+            },
           },
         });
       }
@@ -123,6 +127,7 @@ export class AuthController {
         data: {
           email,
           role: "JOBSEEKER",
+          name: "Shivam Anand",
         },
       });
 

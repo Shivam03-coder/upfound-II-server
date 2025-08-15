@@ -1,5 +1,5 @@
 import admin from "@src/common/configs/firebase.config";
-import { IoauthData } from "./auth.dto.types";
+import { IoauthData } from "./auth.dto.";
 import { ValidationError } from "@src/common/utils/error.utils";
 
 class AuthServices {
