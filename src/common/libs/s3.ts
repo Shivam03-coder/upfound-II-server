@@ -6,11 +6,6 @@ import { v4 as uuidv4 } from "uuid";
 import { envs } from "../configs/envs.config";
 import { Readable } from "stream";
 
-interface SignedUrlOptions {
-  expiresIn?: number;
-  isPublic?: boolean;
-}
-
 class S3Service {
   private s3: S3Client;
   private bucketName: string;
@@ -66,67 +61,6 @@ class S3Service {
     } catch (error) {
       console.error("Error uploading file:", error);
       throw new Error("Failed to upload file to S3");
-    }
-  }
-
-  async getFileUrl(
-    fileKey: string,
-    options: SignedUrlOptions = {}
-  ): Promise<{
-    url: string;
-    isPublic: boolean;
-    expiresAt?: string;
-    key: string;
-  }> {
-    if (!fileKey) {
-      throw new Error("File key is required");
-    }
-
-    // Return public URL if configured
-    if (options.isPublic) {
-      return {
-        url: `https://${this.bucketName}.s3.${this.region}.amazonaws.com/${fileKey}`,
-        isPublic: true,
-        key: fileKey,
-      };
-    }
-
-    // Generate signed URL
-    const command = new GetObjectCommand({
-      Bucket: this.bucketName,
-      Key: fileKey,
-    });
-
-    try {
-      const expiresIn = options.expiresIn || 3600; // Default 1 hour
-      const url = await getSignedUrl(this.s3, command, { expiresIn });
-
-      return {
-        url,
-        isPublic: false,
-        expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString(),
-        key: fileKey,
-      };
-    } catch (error) {
-      console.error("Error generating signed URL:", error);
-      throw new Error("Failed to generate signed URL");
-    }
-  }
-
-  async fileExists(fileKey: string): Promise<boolean> {
-    try {
-      await this.s3.send(
-        new GetObjectCommand({
-          Bucket: this.bucketName,
-          Key: fileKey,
-        })
-      );
-      return true;
-    } catch (error: any) {
-      if (error.name === "NoSuchKey") {
-        return false;
-      }
-      throw error;
     }
   }
 }

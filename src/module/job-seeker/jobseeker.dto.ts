@@ -1,4 +1,11 @@
-import { JobSeekerStatus, PrimaryInterest } from "@prisma/client";
+import {
+  ActivelyLookingStatus,
+  JobSeekerStatus,
+  JobType,
+  PrimaryInterest,
+  StartupStagePreference,
+  WorkArrangement,
+} from "@prisma/client";
 
 export interface CreateprofileInformationData {
   name: string;
@@ -52,4 +59,35 @@ export interface CreateprofileOverviewData {
   }>;
   workExperiences?: WorkExperience[];
   userId?: string;
+}
+
+export interface PreferencesData {
+  userId?: string;
+  activelyLooking: ActivelyLookingStatus;
+  jobType: JobType;
+  startupStagePreference: StartupStagePreference;
+  workArrangement: WorkArrangement;
+}
+
+export interface UploadResumeData {
+  userId?: string;
+  resumeUrl?: string;
+}
+
+export interface JobPreferences {
+  nextJobGoals: string;
+  workMotivation: string;
+  workStylePreference: string;
+  preferredWorkEnvironment: string;
+  userId?: string;
+}
+
+export interface ProjectLinkData {
+  userId?: string;
+  links: string[];
+}
+
+export interface UpdateProfilePicData {
+  userId?: string;
+  profilePicture?: string;
 }

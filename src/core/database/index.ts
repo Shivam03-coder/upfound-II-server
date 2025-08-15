@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { NotFoundError } from "@src/common/utils/error.utils";
+import { NotFoundError, ValidationError } from "@src/common/utils/error.utils";
 
 export const db = new PrismaClient().$extends({
   model: {
@@ -30,6 +30,23 @@ export const db = new PrismaClient().$extends({
         }
 
         return post.id;
+      },
+    },
+
+    jobSeeker: {
+      async getJobSeekerId(userId: string) {
+        const jobSeeker = await db.jobSeeker.findUnique({
+          where: {
+            userId,
+          },
+        });
+
+        if (!jobSeeker) {
+          throw new ValidationError("No jobseeker found");
+        }
+        return {
+          jobSeekerId : jobSeeker.id
+        }
       },
     },
   },

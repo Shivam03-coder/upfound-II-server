@@ -2,11 +2,16 @@ import { db } from "@src/core/database";
 import {
   CreateprofileInformationData,
   CreateprofileOverviewData,
+  JobPreferences,
+  PreferencesData,
+  ProjectLinkData,
+  UpdateProfilePicData,
+  UploadResumeData,
 } from "./jobseeker.dto";
 import { JobSeekerStatus, Prisma } from "@prisma/client";
 import transformWorkExperiences from "@src/common/utils/transform-months.utils";
 
-export class UserService {
+export class JobSeekerService {
   static async saveUserProfileInfo(dto: CreateprofileInformationData) {
     try {
       const isFreshUser = dto.status === JobSeekerStatus.FRESHER;
@@ -190,5 +195,159 @@ export class UserService {
       console.error("Error saving user profile overview:", error);
       throw error;
     }
+  }
+
+  static async savePreferences(dto: PreferencesData) {
+    try {
+      const { jobSeekerId } = await db.jobSeeker.getJobSeekerId(dto.userId!);
+      const userPreference = await db.jobSeekerPreferences.upsert({
+        where: { jobSeekerId },
+        update: {
+          activelyLooking: dto.activelyLooking,
+          jobType: dto.jobType,
+          startupStagePreference: dto.startupStagePreference,
+          workArrangement: dto.workArrangement,
+        },
+        create: {
+          jobSeekerId,
+          activelyLooking: dto.activelyLooking,
+          jobType: dto.jobType,
+          startupStagePreference: dto.startupStagePreference,
+          workArrangement: dto.workArrangement,
+        },
+      });
+      return {
+        message: "User profile preferences saved",
+        preference: userPreference,
+      };
+    } catch (error: any) {
+      console.warn(error);
+      throw new Error(error.message);
+    }
+  }
+
+  static async saveResume(dto: UploadResumeData) {
+    try {
+      const { jobSeekerId } = await db.jobSeeker.getJobSeekerId(dto.userId!);
+      const userDocs = await db.jobSeekerDocument.create({
+        data: {
+          documentUrl: dto.resumeUrl!,
+          jobSeekerId,
+          fileType: "PDF",
+          documentType: "RESUME",
+        },
+      });
+      return {
+        message: "User resume uplaoded succesfully",
+        docs: userDocs,
+      };
+    } catch (error: any) {
+      console.warn(error);
+      throw new Error(error.message);
+    }
+  }
+
+  static async saveJobCulture(dto: JobPreferences) {
+    try {
+      const { jobSeekerId } = await db.jobSeeker.getJobSeekerId(dto.userId!);
+      const userJobCulture = await db.jobSeekerCulturePreferences.create({
+        data: {
+          jobSeekerId,
+          nextJobGoals: dto.nextJobGoals,
+          preferredWorkEnvironment: dto.preferredWorkEnvironment,
+          workMotivation: dto.workMotivation,
+          workStylePreference: dto.workStylePreference,
+        },
+      });
+      return {
+        message: "User culture saved succesfully",
+        culture: userJobCulture,
+      };
+    } catch (error: any) {
+      console.warn(error);
+      throw new Error(error.message);
+    }
+  }
+
+  static async saveProjectLinks(dto: ProjectLinkData) {
+    try {
+      const { jobSeekerId } = await db.jobSeeker.getJobSeekerId(dto.userId!);
+      const userProjectLink = await db.jobSeekerProjectLink.create({
+        data: {
+          jobSeekerId,
+          projectLink: dto.links,
+        },
+      });
+      return {
+        message: "User proeject links saved succesfully",
+        culture: userProjectLink,
+      };
+    } catch (error: any) {
+      console.warn(error);
+      throw new Error(error.message);
+    }
+  }
+
+  static async updateProfilePicture(dto: UpdateProfilePicData) {
+    try {
+      const { jobSeekerId } = await db.jobSeeker.getJobSeekerId(dto.userId!);
+      const userProjectLink = await db.jobSeeker.update({
+        where: {
+          id: jobSeekerId,
+        },
+        data: {
+          profilePicture: dto.profilePicture,
+        },
+      });
+      return {
+        message: "User proeject links saved succesfully",
+        jobseeker: userProjectLink,
+      };
+    } catch (error: any) {
+      console.warn(error);
+      throw new Error(error.message);
+    }
+  }
+
+  static async getJobSeekerProfile(dto: { userId: string }) {
+    const jobSeeker = await db.jobSeeker.findUnique({
+      where: { userId: dto.userId },
+      include: {
+        projectLinks: true,
+        technicalProfile: {
+          include: {
+            certifications: true,
+          },
+        },
+        workExperience: {
+          include: {
+            workExperiences: true,
+          },
+        },
+        preferences: true,
+        education: {
+          include: {
+            education: true,
+          },
+        },
+        documents: true,
+        culturePreferences: true,
+        user: true,
+      },
+    });
+
+    if (!jobSeeker) return null;
+
+    return {
+      ...jobSeeker.user,
+      ...jobSeeker.preferences,
+      ...jobSeeker.culturePreferences,
+      ...jobSeeker.projectLinks,
+      ...jobSeeker.technicalProfile,
+      certifications: jobSeeker.technicalProfile?.certifications || [],
+      education: jobSeeker.education?.education || [],
+      workExperiences: jobSeeker.workExperience?.workExperiences || [],
+      documents: jobSeeker.documents || [],
+    };
   }
 }

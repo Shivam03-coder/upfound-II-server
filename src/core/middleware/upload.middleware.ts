@@ -11,18 +11,23 @@ if (!fs.existsSync(uploadsDir)) {
 
 export class UploadMiddleware {
   private static readonly allowedMimeTypes = [
+    // Images
     "image/jpeg",
     "image/png",
     "image/webp",
     "image/gif",
     "image/svg+xml",
+    // Videos
     "video/mp4",
     "video/webm",
     "video/quicktime",
+    // Documents
     "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // DOCX
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation", // PPTX
   ];
 
-  private static readonly maxFileSize = 50 * 1024 * 1024; 
+  private static readonly maxFileSize = 50 * 1024 * 1024;
 
   private static fileFilter(
     req: Request,

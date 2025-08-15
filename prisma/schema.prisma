@@ -212,7 +212,7 @@ enum WorkArrangement {
 }
 
 enum StartupStagePreference {
-    EARLY_STAGE
+    IDEA_STAGE
     GROWTH_STAGE
     MATURE_STAGE
 }
