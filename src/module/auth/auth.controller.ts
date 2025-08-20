@@ -48,10 +48,8 @@ export class AuthController {
         id: dbUser.id,
         role: dbUser.role!,
       });
-
       res.cookie("accessToken", accessToken, getCookieOptions(1));
       res.cookie("refreshToken", refreshToken, getCookieOptions(7));
-
       res.status(200).json(
         new ApiResponse("User created successfully", {
           id: dbUser.id,

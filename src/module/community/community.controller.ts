@@ -63,6 +63,7 @@ class CommunityController {
       res.json(new ApiResponse("All posts fetched succesfully", response));
     }
   );
+
 }
 
 export default CommunityController;

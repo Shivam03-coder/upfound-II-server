@@ -26,7 +26,7 @@ model User {
 model JobSeeker {
     id                    String                       @id @default(uuid())
     userId                String                       @unique
-    user                  User                         @relation(fields: [userId], references: [id])
+    user                  User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
     gender                String?
     age                   Int?
     bio                   String?
@@ -58,7 +58,7 @@ model JobSeeker {
 
 model JobSeekerProjectLink {
     id          String    @id @default(uuid())
-    jobSeeker   JobSeeker @relation(fields: [jobSeekerId], references: [id])
+    jobSeeker   JobSeeker @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
     jobSeekerId String    @unique
     projectLink String[]
 
@@ -67,7 +67,7 @@ model JobSeekerProjectLink {
 
 model JobSeekerTechnicalProfile {
     id                String                   @id @default(uuid())
-    jobSeeker         JobSeeker                @relation(fields: [jobSeekerId], references: [id])
+    jobSeeker         JobSeeker                @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
     jobSeekerId       String                   @unique
     desiredRoles      String[]
     skills            String[]
@@ -92,7 +92,7 @@ model JobSeekerCertification {
 
 model JobSeekerWorkExperience {
     id              String                @id @default(uuid())
-    jobSeeker       JobSeeker             @relation(fields: [jobSeekerId], references: [id])
+    jobSeeker       JobSeeker             @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
     jobSeekerId     String                @unique
     workExperiences JobSeekerExperience[]
     createdAt       DateTime              @default(now())
@@ -104,7 +104,7 @@ model JobSeekerWorkExperience {
 model JobSeekerExperience {
     id                  String                  @id @default(uuid())
     groupId             String
-    workExperienceGroup JobSeekerWorkExperience @relation(fields: [groupId], references: [id])
+    workExperienceGroup JobSeekerWorkExperience @relation(fields: [groupId], references: [id], onDelete: Cascade)
     title               String
     employmentType      String
     company             String
@@ -118,7 +118,7 @@ model JobSeekerExperience {
 
 model JobSeekerPreferences {
     id                     String                 @id @default(uuid())
-    jobSeeker              JobSeeker              @relation(fields: [jobSeekerId], references: [id])
+    jobSeeker              JobSeeker              @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
     jobSeekerId            String                 @unique
     activelyLooking        ActivelyLookingStatus
     workArrangement        WorkArrangement
@@ -132,7 +132,7 @@ model JobSeekerPreferences {
 
 model JobSeekerEducation {
     id          String                   @id @default(uuid())
-    jobSeeker   JobSeeker                @relation(fields: [jobSeekerId], references: [id])
+    jobSeeker   JobSeeker                @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
     jobSeekerId String                   @unique
     education   JobSeekerEducationItem[]
     createdAt   DateTime                 @default(now())
@@ -146,7 +146,7 @@ model JobSeekerEducationItem {
     degree         String
     institution    String
     graduationYear Int?
-    education      JobSeekerEducation @relation(fields: [educationId], references: [id])
+    education      JobSeekerEducation @relation(fields: [educationId], references: [id], onDelete: Cascade)
     educationId    String
 
     @@map("job_seeker_education_item")
@@ -154,7 +154,7 @@ model JobSeekerEducationItem {
 
 model JobSeekerDocument {
     id           String       @id @default(uuid())
-    jobSeeker    JobSeeker    @relation(fields: [jobSeekerId], references: [id])
+    jobSeeker    JobSeeker    @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
     jobSeekerId  String
     documentUrl  String
     documentType DocumentType @default(RESUME)
@@ -167,7 +167,7 @@ model JobSeekerDocument {
 
 model JobSeekerCulturePreferences {
     id                       String    @id @default(uuid())
-    jobSeeker                JobSeeker @relation(fields: [jobSeekerId], references: [id])
+    jobSeeker                JobSeeker @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
     jobSeekerId              String    @unique
     nextJobGoals             String?
     workMotivation           String?
