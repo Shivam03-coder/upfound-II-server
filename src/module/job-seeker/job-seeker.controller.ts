@@ -39,10 +39,14 @@ class JobSeekerController {
     async (req: Request, res: Response) => {
       const data = req.body as CreateprofileOverviewData;
       const { userId } = await getAuth(req);
-
+      let profilePicture = "";
+      if (req.file) {
+        profilePicture = (await s3Service.uploadFile(req)).url ?? "";
+      }
       const resp = await JobSeekerService.saveUserProfileOverview({
         ...data,
         userId,
+        profilePicture,
       });
 
       res
