@@ -1,5 +1,5 @@
 import { Response } from "express";
-import App from "./app/app";
+import App from "./app";
 import { envs } from "./common/configs/envs.config";
 const appInstance = new App();
 const expressApp = appInstance.getAppInstance();
