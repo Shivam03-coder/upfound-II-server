@@ -164,11 +164,7 @@ export class JobSeekerService {
           },
         });
 
-        await tx.jobSeekerExperience.deleteMany({
-          where: { groupId: jobSeeker.workExperience?.id },
-        });
-
-        await tx.jobSeekerWorkExperience.delete({
+        await tx.jobSeekerWorkExperience.deleteMany({
           where: {
             jobSeekerId: jobSeeker.id,
           },

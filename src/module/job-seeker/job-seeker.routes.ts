@@ -3,14 +3,15 @@ import uploader from "@src/core/middleware/upload.middleware";
 import { requireAuth } from "@src/core/middleware/auth.middleware";
 import JobSeekerController from "./job-seeker.controller";
 const jobSeekerRouter = Router();
+jobSeekerRouter.use(requireAuth)
 
-jobSeekerRouter.post( "/profile", uploader,requireAuth ,JobSeekerController .userProfileInfoHandler)
-jobSeekerRouter .get("/profile", requireAuth, JobSeekerController.getJobSeekerProfileHandler);
-jobSeekerRouter.post("/profile-overview", requireAuth, JobSeekerController.profileOverviewHandler);
-jobSeekerRouter.post("/culture", requireAuth, JobSeekerController.userCultureHandler);
-jobSeekerRouter.put("/profile/picture" , uploader,requireAuth , JobSeekerController.updateUserProfilePicHandler);
-jobSeekerRouter.post( "/resume", uploader, requireAuth, JobSeekerController.saveResumeHandler);
-jobSeekerRouter.post("/preferences", requireAuth, JobSeekerController.preferencesHandler);
-jobSeekerRouter.post("/projectLink", requireAuth, JobSeekerController.saveProjectLinksHandler);
+jobSeekerRouter.post( "/profile", uploader ,JobSeekerController .userProfileInfoHandler)
+jobSeekerRouter.get("/profile", JobSeekerController.getJobSeekerProfileHandler);
+jobSeekerRouter.post("/profile-overview", JobSeekerController.profileOverviewHandler);
+jobSeekerRouter.post("/culture", JobSeekerController.userCultureHandler);
+jobSeekerRouter.put("/profile/picture" , uploader , JobSeekerController.updateUserProfilePicHandler);
+jobSeekerRouter.post( "/resume", uploader, JobSeekerController.saveResumeHandler);
+jobSeekerRouter.post("/preferences",JobSeekerController.preferencesHandler);
+jobSeekerRouter.post("/projectLink", JobSeekerController.saveProjectLinksHandler);
 
 export default jobSeekerRouter;
