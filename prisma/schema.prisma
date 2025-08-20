@@ -196,7 +196,6 @@ enum PrimaryInterest {
 enum JobSeekerStatus {
     FRESHER
     EXPERIENCED
-    INTERN
 }
 
 enum ActivelyLookingStatus {
@@ -220,7 +219,6 @@ enum StartupStagePreference {
 enum JobType {
     INTERNSHIPS
     FULL_TIME
-    FREELANCE
     PART_TIME
     CO_FOUNDER
     ADVISOR_MENTOR
