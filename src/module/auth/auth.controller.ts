@@ -11,7 +11,6 @@ export class AuthController {
   public static oAuthLoginHandler = AsyncHandler(
     async (req: Request, res: Response) => {
       const { role, token } = req.body as UserAuthData;
-
       if (!token) throw new AuthError("ID token is missing.");
 
       const { email, name, picture } = await AuthServices.firebaseAuthLogin(
@@ -52,8 +51,8 @@ export class AuthController {
       res.cookie("refreshToken", refreshToken, getCookieOptions(7));
       res.status(200).json(
         new ApiResponse("User created successfully", {
-          id: dbUser.id,
-          role: dbUser.role,
+          accessToken,
+          role,
         })
       );
     }
