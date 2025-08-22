@@ -17,42 +17,47 @@ export class AuthController {
         token
       );
 
-      const isUserExist = await db.user.findUnique({ where: { email } });
+      let dbUser = await db.user.findUnique({ where: { email } });
 
-      if (isUserExist) {
-        throw new AuthError("User already exists");
-      }
-
-      const dbUser = await db.$transaction(async (tx) => {
-        const newUser = await tx.user.create({
-          data: {
-            email,
-            role,
-            name,
-          },
-        });
-
-        if (role === "JOBSEEKER") {
-          await tx.jobSeeker.create({
+      if (!dbUser) {
+        dbUser = await db.$transaction(async (tx) => {
+          const newUser = await tx.user.create({
             data: {
-              userId: newUser.id,
-              profilePicture: picture,
+              email,
+              role,
+              name,
             },
           });
-        }
-        return newUser;
-      });
+
+          if (role === "JOBSEEKER") {
+            await tx.jobSeeker.create({
+              data: {
+                userId: newUser.id,
+                profilePicture: picture,
+              },
+            });
+          }
+
+          return newUser;
+        });
+      } else {
+        dbUser = await db.user.update({
+          where: { id: dbUser.id },
+          data: { name },
+        });
+      }
 
       const { accessToken, refreshToken } = TokenService.generateTokens({
         id: dbUser.id,
         role: dbUser.role!,
       });
+
       res.cookie("accessToken", accessToken, getCookieOptions(1));
       res.cookie("refreshToken", refreshToken, getCookieOptions(7));
       res.status(200).json(
-        new ApiResponse("User created successfully", {
+        new ApiResponse("User logged in successfully", {
           accessToken,
-          role,
+          role: dbUser.role,
         })
       );
     }

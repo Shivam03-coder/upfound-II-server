@@ -236,6 +236,8 @@ enum UserRole {
     ADMIN
 }
 
+// ======================== RECUIRTER SECTION ========================
+
 // ======================== COMMUNITY SECTION ========================
 
 model Post {
