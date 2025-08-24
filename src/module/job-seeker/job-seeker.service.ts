@@ -279,10 +279,9 @@ export class JobSeekerService {
 
   static async updateProfilePicture(dto: UpdateProfilePicData) {
     try {
-      const { jobSeekerId } = await db.jobSeeker.getJobSeekerId(dto.userId!);
-      const userProjectLink = await db.jobSeeker.update({
+      const userProjectLink = await db.profile.update({
         where: {
-          id: jobSeekerId,
+          userId: dto.userId,
         },
         data: {
           profilePicture: dto.profilePicture,
@@ -308,11 +307,6 @@ export class JobSeekerService {
             certifications: true,
           },
         },
-        workExperience: {
-          include: {
-            workExperiences: true,
-          },
-        },
         preferences: true,
         education: {
           include: {
@@ -322,6 +316,19 @@ export class JobSeekerService {
         documents: true,
         culturePreferences: true,
         user: true,
+      },
+    });
+
+    const experience = db.user.findUnique({
+      where: {
+        id: dto.userId,
+      },
+      include: {
+        experience: {
+          include: {
+            workExperiences: true,
+          },
+        },
       },
     });
 
@@ -335,7 +342,7 @@ export class JobSeekerService {
       ...jobSeeker.technicalProfile,
       certifications: jobSeeker.technicalProfile?.certifications || [],
       education: jobSeeker.education?.education || [],
-      workExperiences: jobSeeker.workExperience?.workExperiences || [],
+      workExperiences: experience,
       documents: jobSeeker.documents || [],
     };
   }
