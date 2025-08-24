@@ -5,7 +5,7 @@ import { ApiResponse, AsyncHandler } from "@src/common/utils/api.utils";
 import { db } from "@src/core/database";
 import TokenService from "@src/common/libs/jwt-token";
 import { getCookieOptions } from "@src/common/utils/cookie.util";
-import { AuthError } from "@src/common/utils/error.utils";
+import { AuthError, ValidationError } from "@src/common/utils/error.utils";
 
 export class AuthController {
   public static oAuthLoginHandler = AsyncHandler(
@@ -17,39 +17,32 @@ export class AuthController {
         token
       );
 
-      let dbUser = await db.user.findUnique({ where: { email } });
+      const existingUser = await db.profile.findUnique({ where: { email } });
+      let createdUser;
 
-      if (!dbUser) {
-        dbUser = await db.$transaction(async (tx) => {
-          const newUser = await tx.user.create({
-            data: {
-              email,
-              role,
-              name,
-            },
-          });
-
-          if (role === "JOBSEEKER") {
-            await tx.jobSeeker.create({
-              data: {
-                userId: newUser.id,
+      if (!existingUser) {
+        createdUser = await db.user.create({
+          data: {
+            role,
+            profile: {
+              create: {
+                email,
+                name,
                 profilePicture: picture,
               },
-            });
-          }
-
-          return newUser;
-        });
-      } else {
-        dbUser = await db.user.update({
-          where: { id: dbUser.id },
-          data: { name },
+            },
+            authProvider: "GOOGLE",
+          },
         });
       }
 
+      if (!createdUser) {
+        throw new ValidationError("User account creation failed");
+      }
+
       const { accessToken, refreshToken } = TokenService.generateTokens({
-        id: dbUser.id,
-        role: dbUser.role!,
+        id: createdUser.id,
+        role: createdUser.role!,
       });
 
       res.cookie("accessToken", accessToken, getCookieOptions(1));
@@ -57,7 +50,7 @@ export class AuthController {
       res.status(200).json(
         new ApiResponse("User logged in successfully", {
           accessToken,
-          role: dbUser.role,
+          role: createdUser.role,
         })
       );
     }
@@ -86,27 +79,10 @@ export class AuthController {
         throw new AuthError("Unauthorized access. User info not found.");
       }
 
-      // Fetch complete user info based on role
-      let userInfo;
-      if (user.role === "JOBSEEKER") {
-        userInfo = await db.jobSeeker.findUnique({
-          where: { userId: user.id },
-          select: {
-            profilePicture: true,
-            user: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        });
-      }
-
       res.status(200).json(
         new ApiResponse("User information fetched successfully", {
           id: user.id,
           role: user.role,
-          ...userInfo,
         })
       );
     }
@@ -118,36 +94,6 @@ export class AuthController {
       res.clearCookie("refreshToken");
 
       res.status(200).json(new ApiResponse("Sign out successful"));
-    }
-  );
-
-  public static getTestTokens = AsyncHandler(
-    async (req: Request, res: Response): Promise<void> => {
-      const { email, name, status } = req.body;
-
-      const user = await db.user.create({
-        data: {
-          email,
-          role: "JOBSEEKER",
-          name: "Shivam Anand",
-        },
-      });
-
-      const { accessToken, refreshToken } = TokenService.generateTokens({
-        id: user.id,
-        role: user.role!,
-      });
-
-      res.cookie("accessToken", accessToken, getCookieOptions(1));
-      res.cookie("refreshToken", refreshToken, getCookieOptions(7));
-
-      res.status(200).json(
-        new ApiResponse("Test tokens generated successfully", {
-          accessToken,
-          refreshToken,
-          userId: user.id,
-        })
-      );
     }
   );
 }

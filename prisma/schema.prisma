@@ -9,16 +9,17 @@ datasource db {
 
 model User {
     id               String       @id @default(uuid())
-    name             String
-    email            String       @unique
-    phoneNumber      String?      @unique
-    createdAt        DateTime     @default(now())
-    updatedAt        DateTime     @updatedAt
     jobSeekerProfile JobSeeker?
     role             UserRole?
-    Post             Post[]
-    EntityLike       EntityLike[]
-    Comment          Comment[]
+    post             Post[]
+    entityLike       EntityLike[]
+    comment          Comment[]
+    createdAt        DateTime     @default(now())
+    updatedAt        DateTime     @updatedAt
+    experience       Experience?
+    recruiter        Recruiter?
+    profile          Profile?
+    authProvider     AuthProvider @default(GOOGLE)
 
     @@map("users")
 }
@@ -27,20 +28,14 @@ model JobSeeker {
     id                    String                       @id @default(uuid())
     userId                String                       @unique
     user                  User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
-    gender                String?
-    age                   Int?
-    bio                   String?
-    profilePicture        String?
     primaryInterest       PrimaryInterest?
     location              String?
-    tagline               String?
     isPhoneNumberVerified Boolean                      @default(false)
     status                JobSeekerStatus?
     profileView           Int                          @default(0)
     searchView            Int                          @default(0)
     projectLinks          JobSeekerProjectLink?
     technicalProfile      JobSeekerTechnicalProfile?
-    workExperience        JobSeekerWorkExperience?
     preferences           JobSeekerPreferences?
     education             JobSeekerEducation?
     documents             JobSeekerDocument[]
@@ -88,32 +83,6 @@ model JobSeekerCertification {
     technicalProfileId String
 
     @@map("job_seeker_certifications")
-}
-
-model JobSeekerWorkExperience {
-    id              String                @id @default(uuid())
-    jobSeeker       JobSeeker             @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
-    jobSeekerId     String                @unique
-    workExperiences JobSeekerExperience[]
-    createdAt       DateTime              @default(now())
-    updatedAt       DateTime              @updatedAt
-
-    @@map("job_seeker_work_experience")
-}
-
-model JobSeekerExperience {
-    id                  String                  @id @default(uuid())
-    groupId             String
-    workExperienceGroup JobSeekerWorkExperience @relation(fields: [groupId], references: [id], onDelete: Cascade)
-    title               String
-    employmentType      String
-    company             String
-    startMonth          Int?
-    startYear           Int?
-    endMonth            Int?
-    endYear             Int?
-
-    @@map("job_seeker_experience")
 }
 
 model JobSeekerPreferences {
@@ -179,6 +148,12 @@ model JobSeekerCulturePreferences {
     @@map("job_seeker_culture_preferences")
 }
 
+enum AuthProvider {
+    GOOGLE
+    PHONE_NUMBERI
+    LINKEDIN
+}
+
 enum PrimaryInterest {
     TECH_DEVELOPER_ENGINEER
     PRODUCT_MANAGEMENT
@@ -237,6 +212,120 @@ enum UserRole {
 }
 
 // ======================== RECUIRTER SECTION ========================
+
+model Recruiter {
+    id                 String   @id @default(uuid())
+    designation        String?
+    location           String?
+    profilePicture     String?
+    tagline            String?
+    aboutCompany       String?  @db.VarChar(2000)
+    skillSet           String[]
+    communityProfileId String?
+    createdAt          DateTime @default(now())
+    updatedAt          DateTime @updatedAt
+
+    company CompanyProfile? @relation("RecuirterToCompanyProfile")
+
+    userId String @unique
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@map("recruiters")
+}
+
+model Job {
+    id          String  @id @default(uuid())
+    title       String
+    description String
+    location    String
+    salaryRange String?
+
+    companyId String
+    company   CompanyProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("jobs")
+}
+
+model CompanyProfile {
+    id                 String   @id @default(uuid())
+    role               String
+    companyName        String
+    companyType        String?
+    companyPic         String?
+    websiteLink        String?
+    socialLinks        String[]
+    location           String?
+    companyStage       String?
+    companySize        String?
+    foundedIn          Int?
+    foundedYear        String?
+    workEmail          String?
+    companySummary     String?
+    fundingDetails     String?
+    profileView        Int      @default(0)
+    totalOpenPositions Int      @default(0)
+    createdAt          DateTime @default(now())
+    updatedAt          DateTime @updatedAt
+
+    jobs Job[]
+
+    recruiterId String    @unique
+    recruiter   Recruiter @relation("RecuirterToCompanyProfile", fields: [recruiterId], references: [id], onDelete: Cascade)
+
+    @@map("company_profiles")
+}
+
+// ======================= COMMON MODULE ============================
+
+model Profile {
+    id             String  @id @default(uuid())
+    age            Int?
+    name           String
+    email          String  @unique
+    gender         String?
+    phoneNumber    String? @unique
+    bio            String?
+    tagline        String?
+    profilePicture String?
+    userId         String  @unique
+    user           User    @relation(fields: [userId], references: [id])
+
+    @@map("profile")
+}
+
+model Experience {
+    id              String           @id @default(uuid())
+    userId          String           @unique
+    user            User             @relation(fields: [userId], references: [id])
+    workExperiences WorkExperience[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("experiences")
+}
+
+model WorkExperience {
+    id           String     @id @default(uuid())
+    experienceId String
+    experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+
+    title          String
+    employmentType String
+    company        String
+    startMonth     Int?
+    startYear      Int?
+    endMonth       Int?
+    endYear        Int?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("work_experiences")
+}
 
 // ======================== COMMUNITY SECTION ========================
 
