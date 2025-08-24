@@ -290,16 +290,14 @@ model Profile {
     bio            String?
     tagline        String?
     profilePicture String?
-    userId         String  @unique
-    user           User    @relation(fields: [userId], references: [id],onDelete: Cascade)
+    user           User    @relation(fields: [id], references: [id], onDelete: Cascade)
 
     @@map("profile")
 }
 
 model Experience {
     id              String           @id @default(uuid())
-    userId          String           @unique
-    user            User             @relation(fields: [userId], references: [id],onDelete: Cascade)
+    user            User             @relation(fields: [id], references: [id], onDelete: Cascade)
     workExperiences WorkExperience[]
 
     createdAt DateTime @default(now())
@@ -309,10 +307,7 @@ model Experience {
 }
 
 model WorkExperience {
-    id           String     @id @default(uuid())
-    experienceId String
-    experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
-
+    id             String     @id @default(uuid())
     title          String
     employmentType String
     company        String
@@ -320,10 +315,11 @@ model WorkExperience {
     startYear      Int?
     endMonth       Int?
     endYear        Int?
-
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
+    experienceId   String
+    experience     Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
     @@map("work_experiences")
 }
 

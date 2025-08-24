@@ -15,20 +15,19 @@ export class JobSeekerService {
   static async saveUserProfileInfo(dto: CreateprofileInformationData) {
     try {
       const isFreshUser = dto.status === JobSeekerStatus.FRESHER;
-      let workExperiences: Prisma.WorkExperienceWhereInput[] = [];
-
-      if (!isFreshUser && dto.workExperiences) {
-        workExperiences = transformWorkExperiences(dto.workExperiences);
-      }
-
-      const existingUser = await db.profile.findUnique({
-        where: { email: dto.email },
-      });
 
       const jobSeeker = await db.$transaction(async (tx) => {
-        await tx.profile.update({
+        await tx.profile.upsert({
           where: { id: dto.userId },
-          data: {
+          update: {
+            phoneNumber: dto.phoneNumber,
+            name: dto.name,
+            age: dto.age,
+            tagline: dto.tagline,
+            profilePicture: dto.profilePicture ?? undefined,
+          },
+          create: {
+            email: dto.email,
             phoneNumber: dto.phoneNumber,
             name: dto.name,
             age: dto.age,
@@ -52,22 +51,14 @@ export class JobSeekerService {
           },
         });
 
-        await tx.experience.delete({
-          where: {
-            userId: dto.userId,
-          },
-        });
-
-        if (!isFreshUser && workExperiences.length > 0) {
-          await tx.experience.create({
-            data: {
-              userId: dto.userId!,
-              workExperiences: {
-                create: dto.workExperiences!,
-              },
-            },
-          });
+        if (!isFreshUser) {
+          await this.upsertWorkExperiences(
+            tx as any,
+            dto.userId!,
+            dto.workExperiences || []
+          );
         }
+
         return jobSeeker;
       });
 
@@ -80,19 +71,11 @@ export class JobSeekerService {
 
   static async saveUserProfileOverview(dto: CreateprofileOverviewData) {
     const isFreshUser = dto.status === JobSeekerStatus.FRESHER;
-    let workExperiences: Prisma.WorkExperienceWhereInput[] = [];
-    if (!isFreshUser && dto.workExperiences) {
-      workExperiences = transformWorkExperiences(dto.workExperiences);
-    }
 
     try {
       const result = await db.$transaction(async (tx) => {
-        //  UPADTE PROFILE
-
         await tx.profile.update({
-          where: {
-            userId: dto.userId!,
-          },
+          where: { id: dto.userId! },
           data: {
             tagline: dto.tagline,
             gender: dto.gender,
@@ -101,8 +84,6 @@ export class JobSeekerService {
             profilePicture: dto.profilePicture,
           },
         });
-
-        // UPADTE JOBSEEKER
 
         const jobseeker = await tx.jobSeeker.upsert({
           where: { userId: dto.userId },
@@ -119,21 +100,14 @@ export class JobSeekerService {
           },
         });
 
-        // UPSERT JOBSEEKER EDUCATION
-
         await tx.jobSeekerEducation.upsert({
           where: { jobSeekerId: jobseeker.id },
           update: {
-            education: {
-              deleteMany: {},
-              create: dto.education || [],
-            },
+            education: { deleteMany: {}, create: dto.education || [] },
           },
           create: {
             jobSeekerId: jobseeker.id,
-            education: {
-              create: dto.education || [],
-            },
+            education: { create: dto.education || [] },
           },
         });
 
@@ -151,32 +125,19 @@ export class JobSeekerService {
             jobSeekerId: jobseeker.id,
             desiredRoles: dto.desiredRoles,
             skills: dto.skills,
-            certifications: {
-              create: dto.certifications || [],
-            },
+            certifications: { create: dto.certifications || [] },
           },
         });
 
-        await tx.experience.delete({
-          where: {
-            userId: dto.userId,
-          },
-        });
-
-        if (!isFreshUser && workExperiences.length > 0) {
-          await tx.experience.create({
-            data: {
-              userId: dto.userId!,
-              workExperiences: {
-                create: dto.workExperiences,
-              },
-            },
-          });
+        if (!isFreshUser) {
+          await this.upsertWorkExperiences(
+            tx as any,
+            dto.userId!,
+            dto.workExperiences || []
+          );
         }
 
-        return {
-          message: "User profile overview saved succesfully",
-        };
+        return { message: "User profile overview saved succesfully" };
       });
 
       return result;
@@ -281,7 +242,7 @@ export class JobSeekerService {
     try {
       const userProjectLink = await db.profile.update({
         where: {
-          userId: dto.userId,
+          id: dto.userId,
         },
         data: {
           profilePicture: dto.profilePicture,
@@ -315,11 +276,15 @@ export class JobSeekerService {
         },
         documents: true,
         culturePreferences: true,
-        user: true,
+        user: {
+          include: {
+            profile: true,
+          },
+        },
       },
     });
 
-    const experience = db.user.findUnique({
+    const experience = await db.user.findUnique({
       where: {
         id: dto.userId,
       },
@@ -335,15 +300,72 @@ export class JobSeekerService {
     if (!jobSeeker) return null;
 
     return {
-      ...jobSeeker.user,
-      ...jobSeeker.preferences,
-      ...jobSeeker.culturePreferences,
-      ...jobSeeker.projectLinks,
-      ...jobSeeker.technicalProfile,
-      certifications: jobSeeker.technicalProfile?.certifications || [],
-      education: jobSeeker.education?.education || [],
-      workExperiences: experience,
-      documents: jobSeeker.documents || [],
+      profile: {
+        title: "Profile",
+        data: jobSeeker.user.profile || {},
+      },
+      preferences: {
+        title: "Preferences",
+        data: jobSeeker.preferences || {},
+      },
+      culturePreferences: {
+        title: "Culture Preferences",
+        data: jobSeeker.culturePreferences || {},
+      },
+      projectLinks: {
+        title: "Project Links",
+        data: jobSeeker.projectLinks || {},
+      },
+      technicalProfile: {
+        title: "Technical Profile",
+        data: {
+          ...jobSeeker.technicalProfile,
+          certifications: jobSeeker.technicalProfile?.certifications || [],
+        },
+      },
+      education: {
+        title: "Education",
+        data: jobSeeker.education?.education || [],
+      },
+      workExperiences: {
+        title: "Work Experiences",
+        data: experience?.experience?.workExperiences || [],
+      },
+      documents: {
+        title: "Documents",
+        data: jobSeeker.documents || [],
+      },
     };
+  }
+
+  private static async upsertWorkExperiences(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    workExperiences: CreateprofileInformationData["workExperiences"]
+  ) {
+    if (!workExperiences || workExperiences.length === 0) return;
+
+    const experience = await tx.experience.upsert({
+      where: { id: userId },
+      update: {},
+      create: { id: userId },
+    });
+
+    await tx.workExperience.deleteMany({
+      where: { experienceId: experience.id },
+    });
+
+    await tx.workExperience.createMany({
+      data: workExperiences.map((exp) => ({
+        experienceId: experience.id,
+        title: exp.title,
+        employmentType: exp.employmentType,
+        company: exp.company,
+        startMonth: exp.startMonth,
+        startYear: exp.startYear,
+        endMonth: exp.endMonth,
+        endYear: exp.endYear,
+      })),
+    });
   }
 }
