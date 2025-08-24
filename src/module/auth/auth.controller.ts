@@ -96,4 +96,57 @@ export class AuthController {
       res.status(200).json(new ApiResponse("Sign out successful"));
     }
   );
+
+  public static getTestTokens = AsyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const { email, name, status } = req.body;
+
+      const userProfile = await db.profile.findUnique({
+        where: { email },
+        select: {
+          user: {
+            select: {
+              role: true,
+              id: true,
+            },
+          },
+        },
+      });
+
+      if (!userProfile) {
+        await db.user.create({
+          data: {
+            role: "JOBSEEKER",
+            profile: {
+              create: {
+                name,
+                email,
+              },
+            },
+            jobSeekerProfile: {
+              create: {
+                status: status,
+              },
+            },
+          },
+        });
+      }
+
+      const { accessToken, refreshToken } = TokenService.generateTokens({
+        id: userProfile?.user.id!,
+        role: userProfile?.user.role!,
+      });
+
+      res.cookie("accessToken", accessToken, getCookieOptions(1));
+      res.cookie("refreshToken", refreshToken, getCookieOptions(7));
+
+      res.status(200).json(
+        new ApiResponse("Test tokens generated successfully", {
+          accessToken,
+          refreshToken,
+          userId: userProfile?.user.id,
+        })
+      );
+    }
+  );
 }
