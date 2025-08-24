@@ -15,63 +15,56 @@ export class JobSeekerService {
   static async saveUserProfileInfo(dto: CreateprofileInformationData) {
     try {
       const isFreshUser = dto.status === JobSeekerStatus.FRESHER;
-      let workExperiences: Prisma.JobSeekerExperienceCreateWithoutWorkExperienceGroupInput[] =
-        [];
+      let workExperiences: Prisma.WorkExperienceWhereInput[] = [];
 
       if (!isFreshUser && dto.workExperiences) {
         workExperiences = transformWorkExperiences(dto.workExperiences);
       }
 
-      const existingUser = await db.user.findUnique({
-        where: { id: dto.userId },
-        select: { name: true, phoneNumber: true },
+      const existingUser = await db.profile.findUnique({
+        where: { email: dto.email },
       });
 
-      const updateData = {
-        ...(!existingUser?.name?.trim() ? { name: dto.name } : {}),
-        ...(!existingUser?.phoneNumber?.trim()
-          ? { phoneNumber: dto.phoneNumber }
-          : {}),
-      };
-
       const jobSeeker = await db.$transaction(async (tx) => {
-        if (Object.keys(updateData).length > 0) {
-          await tx.user.update({
-            where: { id: dto.userId },
-            data: updateData,
-          });
-        }
+        await tx.profile.update({
+          where: { id: dto.userId },
+          data: {
+            phoneNumber: dto.phoneNumber,
+            name: dto.name,
+            age: dto.age,
+            tagline: dto.tagline,
+            profilePicture: dto.profilePicture ?? undefined,
+          },
+        });
 
         const jobSeeker = await tx.jobSeeker.upsert({
           where: { userId: dto.userId },
           update: {
-            age: dto.age,
             location: dto.location,
-            tagline: dto.tagline,
             status: dto.status,
             primaryInterest: dto.primaryInterest,
-            profilePicture: dto.profilePicture ?? undefined,
           },
           create: {
             userId: dto.userId!,
-            age: dto.age,
             location: dto.location,
-            tagline: dto.tagline,
             status: dto.status,
             primaryInterest: dto.primaryInterest,
-            profilePicture: dto.profilePicture ?? undefined,
           },
         });
 
-        await tx.jobSeekerWorkExperience.deleteMany({
-          where: { jobSeekerId: jobSeeker.id },
+        await tx.experience.delete({
+          where: {
+            userId: dto.userId,
+          },
         });
 
         if (!isFreshUser && workExperiences.length > 0) {
-          await tx.jobSeekerWorkExperience.create({
+          await tx.experience.create({
             data: {
-              jobSeekerId: jobSeeker.id,
-              workExperiences: { create: workExperiences },
+              userId: dto.userId!,
+              workExperiences: {
+                create: dto.workExperiences!,
+              },
             },
           });
         }
@@ -87,49 +80,49 @@ export class JobSeekerService {
 
   static async saveUserProfileOverview(dto: CreateprofileOverviewData) {
     const isFreshUser = dto.status === JobSeekerStatus.FRESHER;
-    let workExperiences: Prisma.JobSeekerExperienceCreateWithoutWorkExperienceGroupInput[] =
-      [];
+    let workExperiences: Prisma.WorkExperienceWhereInput[] = [];
     if (!isFreshUser && dto.workExperiences) {
       workExperiences = transformWorkExperiences(dto.workExperiences);
     }
 
     try {
       const result = await db.$transaction(async (tx) => {
-        const jobSeeker = await tx.jobSeeker.upsert({
+        //  UPADTE PROFILE
+
+        await tx.profile.update({
+          where: {
+            userId: dto.userId!,
+          },
+          data: {
+            tagline: dto.tagline,
+            gender: dto.gender,
+            bio: dto.bio,
+            age: dto.age,
+            profilePicture: dto.profilePicture,
+          },
+        });
+
+        // UPADTE JOBSEEKER
+
+        const jobseeker = await tx.jobSeeker.upsert({
           where: { userId: dto.userId },
           update: {
-            age: dto.age,
-            bio: dto.bio,
-            gender: dto.gender,
             location: dto.location,
-            tagline: dto.tagline,
-            profilePicture: dto.profilePicture,
             primaryInterest: dto.primaryInterest,
             status: dto.status,
           },
           create: {
             userId: dto.userId!,
-            age: dto.age,
-            bio: dto.bio,
-            gender: dto.gender,
             location: dto.location,
-            tagline: dto.tagline,
-            profilePicture: dto.profilePicture,
             primaryInterest: dto.primaryInterest,
             status: dto.status,
           },
-          select: {
-            id: true,
-            workExperience: {
-              select: {
-                id: true,
-              },
-            },
-          },
         });
 
+        // UPSERT JOBSEEKER EDUCATION
+
         await tx.jobSeekerEducation.upsert({
-          where: { jobSeekerId: jobSeeker.id },
+          where: { jobSeekerId: jobseeker.id },
           update: {
             education: {
               deleteMany: {},
@@ -137,7 +130,7 @@ export class JobSeekerService {
             },
           },
           create: {
-            jobSeekerId: jobSeeker.id,
+            jobSeekerId: jobseeker.id,
             education: {
               create: dto.education || [],
             },
@@ -145,7 +138,7 @@ export class JobSeekerService {
         });
 
         await tx.jobSeekerTechnicalProfile.upsert({
-          where: { jobSeekerId: jobSeeker.id },
+          where: { jobSeekerId: jobseeker.id },
           update: {
             desiredRoles: dto.desiredRoles,
             skills: dto.skills,
@@ -155,7 +148,7 @@ export class JobSeekerService {
             },
           },
           create: {
-            jobSeekerId: jobSeeker.id,
+            jobSeekerId: jobseeker.id,
             desiredRoles: dto.desiredRoles,
             skills: dto.skills,
             certifications: {
@@ -164,18 +157,18 @@ export class JobSeekerService {
           },
         });
 
-        await tx.jobSeekerWorkExperience.deleteMany({
+        await tx.experience.delete({
           where: {
-            jobSeekerId: jobSeeker.id,
+            userId: dto.userId,
           },
         });
 
         if (!isFreshUser && workExperiences.length > 0) {
-          await tx.jobSeekerWorkExperience.create({
+          await tx.experience.create({
             data: {
-              jobSeekerId: jobSeeker.id,
+              userId: dto.userId!,
               workExperiences: {
-                create: workExperiences,
+                create: dto.workExperiences,
               },
             },
           });
