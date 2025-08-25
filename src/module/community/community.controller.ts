@@ -4,7 +4,11 @@ import {
   getAuth,
 } from "@src/common/utils/api.utils";
 import { Request, Response } from "express";
-import { CreatePostData } from "./community.dto";
+import {
+  CommentsData,
+  CommentsReplyData,
+  CreatePostData,
+} from "./community.dto";
 import { s3Service } from "@src/common/libs/s3";
 import CommunityService from "./community.service";
 
@@ -64,6 +68,92 @@ class CommunityController {
     }
   );
 
+  static createCommentHandler = AsyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const { userId } = await getAuth(req);
+      const data = req.body as CommentsData;
+      const postId = parseInt(req.params.postId as string, 10);
+
+      let mediaUrl;
+      if (data.mediaType) {
+        const res = (await s3Service.uploadFile(req)) ?? "";
+        mediaUrl = res.url;
+      }
+      const resp = await CommunityService.createComment({
+        ...data,
+        postId,
+        userId,
+        mediaUrl,
+      });
+
+      res.status(200).json(new ApiResponse(resp.message, resp.comment));
+    }
+  );
+
+  static replyToCommentHandler = AsyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const { userId } = await getAuth(req);
+      const { message, mediaType }: CommentsReplyData = req.body;
+      const postId = Number(req.params.postId);
+      const parentId = Number(req.params.parentId);
+
+      if (isNaN(postId) || isNaN(parentId)) {
+        res
+          .status(400)
+          .json(new ApiResponse("Invalid postId or parentId", null));
+        return;
+      }
+
+      let mediaUrl: string | undefined;
+      if (mediaType) {
+        const upload = await s3Service.uploadFile(req);
+        mediaUrl = upload?.url ?? undefined;
+      }
+
+      const resp = await CommunityService.replyToComment({
+        message,
+        mediaType,
+        postId,
+        parentId,
+        userId,
+        mediaUrl,
+      });
+
+      res.status(200).json(new ApiResponse(resp.message, resp.comment));
+    }
+  );
+
+  static getAllCommentsHandler = AsyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const postId = Number(req.params.postId);
+      const resp = await CommunityService.getAllComments(postId);
+      res.status(200).json(new ApiResponse(resp.message, resp.comments));
+    }
+  );
+
+  static toggleLikeDislikeHandler = AsyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const { userId } = await getAuth(req);
+      const { entityId, entityType } = req.params;
+      const entityIdNum = Number(entityId);
+      if (isNaN(entityIdNum)) {
+        res.status(400).json(new ApiResponse("Invalid entityId", null));
+        return;
+      }
+      const validEntityTypes = ["POST", "COMMENT"];
+      if (!validEntityTypes.includes(entityType)) {
+        res.status(400).json(new ApiResponse("Invalid entityType", null));
+        return;
+      }
+
+      const resp = await CommunityService.toggleLikeDislike({
+        entityId: entityIdNum,
+        entityType: entityType as "POST" | "COMMENT",
+        userId,
+      });
+      res.status(200).json(new ApiResponse(resp.message, resp.data));
+    }
+  );
 }
 
 export default CommunityController;

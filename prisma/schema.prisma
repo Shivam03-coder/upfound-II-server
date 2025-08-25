@@ -26,8 +26,7 @@ model User {
 
 model JobSeeker {
     id                    String                       @id @default(uuid())
-    userId                String                       @unique
-    user                  User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user                  User                         @relation(fields: [id], references: [id], onDelete: Cascade)
     primaryInterest       PrimaryInterest?
     location              String?
     isPhoneNumberVerified Boolean                      @default(false)
@@ -214,43 +213,24 @@ enum UserRole {
 // ======================== RECUIRTER SECTION ========================
 
 model Recruiter {
-    id                 String   @id @default(uuid())
+    id                 String          @id
+    user               User            @relation(fields: [id], references: [id], onDelete: Cascade)
     designation        String?
+    companyName        String?
     location           String?
-    profilePicture     String?
-    tagline            String?
-    aboutCompany       String?  @db.VarChar(2000)
-    skillSet           String[]
+    aboutCompany       String?         @db.VarChar(2000)
+    skillSet           Json?
     communityProfileId String?
-    createdAt          DateTime @default(now())
-    updatedAt          DateTime @updatedAt
-
-    company CompanyProfile? @relation("RecuirterToCompanyProfile")
-
-    userId String @unique
-    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    createdAt          DateTime        @default(now())
+    updatedAt          DateTime        @updatedAt
+    company            CompanyProfile? @relation("RecuirterToCompanyProfile")
+    jobCreated         Job[]
 
     @@map("recruiters")
 }
 
-model Job {
-    id          String  @id @default(uuid())
-    title       String
-    description String
-    location    String
-    salaryRange String?
-
-    companyId String
-    company   CompanyProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("jobs")
-}
-
 model CompanyProfile {
-    id                 String   @id @default(uuid())
+    id                 String    @id @default(uuid())
     role               String
     companyName        String
     companyType        String?
@@ -263,19 +243,93 @@ model CompanyProfile {
     foundedIn          Int?
     foundedYear        String?
     workEmail          String?
-    companySummary     String?
+    companySummary     String?   @db.VarChar(4000)
     fundingDetails     String?
-    profileView        Int      @default(0)
-    totalOpenPositions Int      @default(0)
-    createdAt          DateTime @default(now())
-    updatedAt          DateTime @updatedAt
-
-    jobs Job[]
-
-    recruiterId String    @unique
-    recruiter   Recruiter @relation("RecuirterToCompanyProfile", fields: [recruiterId], references: [id], onDelete: Cascade)
+    profileView        Int       @default(0)
+    totalOpenPositions Int       @default(0)
+    createdAt          DateTime  @default(now())
+    updatedAt          DateTime  @updatedAt
+    jobs               Job[]
+    recruiterId        String    @unique
+    recruiter          Recruiter @relation("RecuirterToCompanyProfile", fields: [recruiterId], references: [id], onDelete: Cascade)
 
     @@map("company_profiles")
+}
+
+//  ========================= JOB =============================
+
+model Job {
+    id             String    @id @default(uuid())
+    role           String
+    jobRole        String
+    jobDescription String
+    typeOfPosition String
+    workMode       String
+    jobLocation    String
+    city           String?
+    state          String?
+    pincode        String?
+    country        String?
+    workExperience String?
+    salaryFrom     Int?
+    salaryTo       Int?
+    equityFrom     Int?
+    equityTo       Int?
+    jobView        Int       @default(0)
+    jobStatus      JobStatus @default(REVIEW)
+    createdAt      DateTime  @default(now())
+    updatedAt      DateTime  @updatedAt
+
+    companyId               String
+    company                 CompanyProfile           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+    recruiterId             String
+    recruiter               Recruiter                @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+    JobApplicationQuestions JobApplicationQuestions?
+    JobsRequiredSkills      JobsRequiredSkills?
+
+    @@map("jobs")
+}
+
+model JobApplicationQuestions {
+    id        String   @id @default(uuid())
+    job       Job      @relation(fields: [id], references: [id])
+    questions String[]
+}
+
+model JobsRequiredSkills {
+    id     String   @id @default(uuid())
+    job    Job      @relation(fields: [id], references: [id])
+    skills String[]
+}
+
+model JobToApplicant {
+    id              String           @id @default(uuid())
+    jobId           String
+    applicantId     String
+    jobStatus       JobStatus
+    JobApplications JobApplications?
+
+    @@map("job_to_applicants")
+}
+
+model JobApplications {
+    id               String         @id @default(uuid())
+    resume           String
+    answer           String[]
+    createdAt        DateTime       @default(now())
+    updatedAt        DateTime       @updatedAt
+    jobToApplicantId String         @unique
+    jobToApplicant   JobToApplicant @relation(fields: [jobToApplicantId], references: [id], onDelete: Cascade)
+
+    @@map("jobapplications")
+}
+
+enum JobStatus {
+    ACTIVE
+    PAUSED
+    DELETED
+    REVIEW
+    REJECT
 }
 
 // ======================= COMMON MODULE ============================
@@ -286,6 +340,7 @@ model Profile {
     name           String
     email          String  @unique
     gender         String?
+    location       String?
     phoneNumber    String? @unique
     bio            String?
     tagline        String?
@@ -307,7 +362,7 @@ model Experience {
 }
 
 model WorkExperience {
-    id             String     @id @default(uuid())
+    id             String   @id @default(uuid())
     title          String
     employmentType String
     company        String
@@ -315,29 +370,29 @@ model WorkExperience {
     startYear      Int?
     endMonth       Int?
     endYear        Int?
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt
 
-    experienceId   String
-    experience     Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+    experienceId String
+    experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+
     @@map("work_experiences")
 }
 
 // ======================== COMMUNITY SECTION ========================
 
 model Post {
-    id           Int           @id @default(autoincrement())
-    content      String        @db.VarChar(5000)
-    community    CommunityType
-    createdAt    DateTime      @default(now())
-    updatedAt    DateTime      @updatedAt
-    likeCount    Int           @default(0)
-    commentCount Int           @default(0)
+    id        Int           @id @default(autoincrement())
+    content   String        @db.VarChar(5000)
+    community CommunityType
+    likeCount Int           @default(0)
+    createdAt DateTime      @default(now())
+    updatedAt DateTime      @updatedAt
 
     userId String
     user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    media    PostMedia[]
+    media    Media[]
     comments Comment[]
 
     @@index([userId])
@@ -346,37 +401,52 @@ model Post {
     @@map("posts")
 }
 
-model PostMedia {
+model Media {
     id        String        @id @default(uuid())
     url       String
     mediaType PostMediaType
-    postId    Int?
-    post      Post?         @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+    postId Int?
+    post   Post? @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+    commentId Int?
+    comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
     @@index([postId])
+    @@index([commentId])
     @@map("posts_media")
 }
 
 model Comment {
-    id        String   @id @default(uuid())
+    id        Int      @id @default(autoincrement())
     message   String
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
     likeCount Int      @default(0)
-    postId    Int
-    post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-    userId    String
-    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    role      String
+
+    postId Int
+    post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    parentId Int?
+    parent   Comment?  @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+    replies  Comment[] @relation("CommentThread")
+
+    media Media[]
 
     @@index([postId])
     @@index([userId])
     @@index([createdAt])
+    @@index([parentId])
     @@map("post_comments")
 }
 
 model EntityLike {
     id         String     @id @default(uuid())
-    entityId   String
+    entityId   Int
     entityType EntityType
     likedAt    DateTime   @default(now())
     userId     String

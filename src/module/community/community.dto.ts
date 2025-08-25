@@ -8,9 +8,28 @@ export type CreatePostData = {
   mediaType: PostMediaType;
 };
 
-export type EditPostData = {
+export interface EditPostData {
   content: string;
-  userId: string;
+  userId?: string;
   postId: number;
-};
+}
+
+export interface CommentsData {
+  message: string;
+  userId?: string;
+  postId?: number;
+  mediaUrl?: string;
+  mediaType?: PostMediaType;
+}
+
+export interface CommentsReplyData extends CommentsData {
+  parentId: number;
+}
+
+export interface ToggleLikeData {
+  userId?: string;
+  entityId: number;
+  entityType: "POST" | "COMMENT";
+}
+
 export type DeletePostData = { postId: number; userId: string };

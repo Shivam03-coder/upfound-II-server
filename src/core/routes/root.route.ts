@@ -2,6 +2,7 @@ import adminRouter from "@src/module/admin/admin.route";
 import authRouter from "@src/module/auth/auth.route";
 import communityRouter from "@src/module/community/community.route";
 import jobSeekerRouter from "@src/module/job-seeker/job-seeker.routes";
+import recruiterRouter from "@src/module/recruiter/recruiter.routes";
 
 export const routes = [
   {
@@ -19,5 +20,9 @@ export const routes = [
   {
     prefix: "community",
     route: communityRouter,
+  },
+  {
+    prefix: "recruiter",
+    route: recruiterRouter,
   },
 ];

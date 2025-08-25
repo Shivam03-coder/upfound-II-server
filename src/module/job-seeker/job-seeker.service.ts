@@ -9,8 +9,7 @@ import {
   UploadResumeData,
 } from "./jobseeker.dto";
 import { JobSeekerStatus, Prisma } from "@prisma/client";
-import transformWorkExperiences from "@src/common/utils/transform-months.utils";
-
+import { upsertWorkExperiences } from "@src/common/utils/work-experiences.utils";
 export class JobSeekerService {
   static async saveUserProfileInfo(dto: CreateprofileInformationData) {
     try {
@@ -37,14 +36,14 @@ export class JobSeekerService {
         });
 
         const jobSeeker = await tx.jobSeeker.upsert({
-          where: { userId: dto.userId },
+          where: { id: dto.userId },
           update: {
             location: dto.location,
             status: dto.status,
             primaryInterest: dto.primaryInterest,
           },
           create: {
-            userId: dto.userId!,
+            id: dto.userId!,
             location: dto.location,
             status: dto.status,
             primaryInterest: dto.primaryInterest,
@@ -52,7 +51,7 @@ export class JobSeekerService {
         });
 
         if (!isFreshUser) {
-          await this.upsertWorkExperiences(
+          await upsertWorkExperiences(
             tx as any,
             dto.userId!,
             dto.workExperiences || []
@@ -86,14 +85,14 @@ export class JobSeekerService {
         });
 
         const jobseeker = await tx.jobSeeker.upsert({
-          where: { userId: dto.userId },
+          where: { id: dto.userId },
           update: {
             location: dto.location,
             primaryInterest: dto.primaryInterest,
             status: dto.status,
           },
           create: {
-            userId: dto.userId!,
+            id: dto.userId!,
             location: dto.location,
             primaryInterest: dto.primaryInterest,
             status: dto.status,
@@ -130,7 +129,7 @@ export class JobSeekerService {
         });
 
         if (!isFreshUser) {
-          await this.upsertWorkExperiences(
+          await upsertWorkExperiences(
             tx as any,
             dto.userId!,
             dto.workExperiences || []
@@ -260,7 +259,7 @@ export class JobSeekerService {
 
   static async getJobSeekerProfile(dto: { userId: string }) {
     const jobSeeker = await db.jobSeeker.findUnique({
-      where: { userId: dto.userId },
+      where: { id: dto.userId },
       include: {
         projectLinks: true,
         technicalProfile: {
@@ -336,36 +335,5 @@ export class JobSeekerService {
         data: jobSeeker.documents || [],
       },
     };
-  }
-
-  private static async upsertWorkExperiences(
-    tx: Prisma.TransactionClient,
-    userId: string,
-    workExperiences: CreateprofileInformationData["workExperiences"]
-  ) {
-    if (!workExperiences || workExperiences.length === 0) return;
-
-    const experience = await tx.experience.upsert({
-      where: { id: userId },
-      update: {},
-      create: { id: userId },
-    });
-
-    await tx.workExperience.deleteMany({
-      where: { experienceId: experience.id },
-    });
-
-    await tx.workExperience.createMany({
-      data: workExperiences.map((exp) => ({
-        experienceId: experience.id,
-        title: exp.title,
-        employmentType: exp.employmentType,
-        company: exp.company,
-        startMonth: exp.startMonth,
-        startYear: exp.startYear,
-        endMonth: exp.endMonth,
-        endYear: exp.endYear,
-      })),
-    });
   }
 }
