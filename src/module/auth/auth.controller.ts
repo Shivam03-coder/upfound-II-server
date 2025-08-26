@@ -33,6 +33,17 @@ export class AuthController {
             },
             authProvider: "GOOGLE",
           },
+          select: {
+            id: true,
+            profile: {
+              select: {
+                name: true,
+                email: true,
+                profilePicture: true,
+              },
+            },
+            role: true,
+          },
         });
       }
 
@@ -45,12 +56,21 @@ export class AuthController {
         role: createdUser.role!,
       });
 
+      const syncUser = {
+        userId: createdUser.id,
+        name: createdUser.profile?.name,
+        email: createdUser.profile?.email,
+        avatar: createdUser.profile?.profilePicture,
+        isVerified: true,
+      };
+
       res.cookie("accessToken", accessToken, getCookieOptions(1));
       res.cookie("refreshToken", refreshToken, getCookieOptions(7));
       res.status(200).json(
         new ApiResponse("User logged in successfully", {
           accessToken,
           role: createdUser.role,
+          syncUser,
         })
       );
     }
