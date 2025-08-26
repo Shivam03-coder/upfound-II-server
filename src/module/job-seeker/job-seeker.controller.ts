@@ -37,6 +37,7 @@ class JobSeekerController {
 
   public static profileOverviewHandler = AsyncHandler(
     async (req: Request, res: Response) => {
+      console.log(req.body)
       const data = req.body as CreateprofileOverviewData;
       const { userId } = await getAuth(req);
       let profilePicture = "";

@@ -71,6 +71,8 @@ export class JobSeekerService {
   static async saveUserProfileOverview(dto: CreateprofileOverviewData) {
     const isFreshUser = dto.status === JobSeekerStatus.FRESHER;
 
+    console.log(dto.workExperiences)
+
     try {
       const result = await db.$transaction(async (tx) => {
         await tx.profile.update({
