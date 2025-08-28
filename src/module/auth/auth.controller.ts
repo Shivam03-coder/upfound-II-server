@@ -5,50 +5,78 @@ import { ApiResponse, AsyncHandler } from "@src/common/utils/api.utils";
 import { db } from "@src/core/database";
 import TokenService from "@src/common/libs/jwt-token";
 import { getCookieOptions } from "@src/common/utils/cookie.util";
-import { AuthError, ValidationError } from "@src/common/utils/error.utils";
+import {
+  AuthError,
+  DatabaseError,
+  ValidationError,
+} from "@src/common/utils/error.utils";
 
 export class AuthController {
   public static oAuthLoginHandler = AsyncHandler(
     async (req: Request, res: Response) => {
       const { role, token } = req.body as UserAuthData;
-      if (!token) throw new AuthError("ID token is missing.");
+      if (!token) throw new AuthError("ID token is missing");
+      if (!role) throw new ValidationError("User role is required");
 
-      const { email, name, picture } = await AuthServices.firebaseAuthLogin(
-        token
-      );
+      let email: string, name: string, picture: string;
+      try {
+        ({ email, name, picture } = await AuthServices.firebaseAuthLogin(
+          token
+        ));
+      } catch (err) {
+        throw new AuthError("Invalid or expired Google token", err);
+      }
 
-      const existingUser = await db.profile.findUnique({ where: { email } });
+      const existingUser = await db.profile.findUnique({
+        where: { email },
+        include: { user: true },
+      });
+
       let createdUser;
 
       if (!existingUser) {
-        createdUser = await db.user.create({
-          data: {
-            role,
-            profile: {
-              create: {
-                email,
-                name,
-                profilePicture: picture,
+        try {
+          createdUser = await db.user.create({
+            data: {
+              role,
+              profile: {
+                create: {
+                  email,
+                  name,
+                  profilePicture: picture,
+                },
+              },
+              authProvider: "GOOGLE",
+            },
+            select: {
+              id: true,
+              role: true,
+              profile: {
+                select: {
+                  name: true,
+                  email: true,
+                  profilePicture: true,
+                },
               },
             },
-            authProvider: "GOOGLE",
+          });
+        } catch (err) {
+          throw new DatabaseError("User account creation failed", err);
+        }
+      } else {
+        createdUser = {
+          id: existingUser.user.id,
+          role: existingUser.user.role,
+          profile: {
+            name: existingUser.name,
+            email: existingUser.email,
+            profilePicture: existingUser.profilePicture,
           },
-          select: {
-            id: true,
-            profile: {
-              select: {
-                name: true,
-                email: true,
-                profilePicture: true,
-              },
-            },
-            role: true,
-          },
-        });
+        };
       }
 
       if (!createdUser) {
-        throw new ValidationError("User account creation failed");
+        throw new DatabaseError("Something went wrong while creating user");
       }
 
       const { accessToken, refreshToken } = TokenService.generateTokens({
@@ -66,6 +94,7 @@ export class AuthController {
 
       res.cookie("accessToken", accessToken, getCookieOptions(1));
       res.cookie("refreshToken", refreshToken, getCookieOptions(7));
+
       res.status(200).json(
         new ApiResponse("User logged in successfully", {
           accessToken,
