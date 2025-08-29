@@ -13,9 +13,8 @@ communityRouter.post("/comment/:postId",uploader,CommunityController.createComme
 communityRouter.post("/reply/:postId/comment/:parentId",uploader,CommunityController.replyToCommentHandler);
 communityRouter.get("/comment/:postId",CommunityController.getAllCommentsHandler);
 communityRouter.patch("/like/:entityId/type/:entityType",CommunityController.toggleLikeDislikeHandler);
+communityRouter.patch("/post/:postId/view",CommunityController.postViewHandler); // POST VIEW
 
 export default communityRouter;
 
 
-// entityId === postId OR commentId
-// entityType === "POST" OR "COMMENT"

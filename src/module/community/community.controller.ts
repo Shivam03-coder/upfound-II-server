@@ -60,9 +60,7 @@ class CommunityController {
 
   static getAllPostHandler = AsyncHandler(
     async (req: Request, res: Response): Promise<void> => {
-      const { userId } = await getAuth(req);
-
-      const response = await CommunityService.getAllPosts({ userId });
+      const response = await CommunityService.getAllPosts();
 
       res.json(new ApiResponse("All posts fetched succesfully", response));
     }
@@ -152,6 +150,15 @@ class CommunityController {
         userId,
       });
       res.status(200).json(new ApiResponse(resp.message, resp.data));
+    }
+  );
+
+  static postViewHandler = AsyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const postId = parseInt(req.params.postId);
+      const { userId } = await getAuth(req);
+      const resp = await CommunityService.postView({ userId, postId });
+      res.status(200).json(new ApiResponse(resp.message, resp.count));
     }
   );
 }

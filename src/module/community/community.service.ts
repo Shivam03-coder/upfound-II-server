@@ -91,11 +91,8 @@ class CommunityService {
     };
   }
 
-  static async getAllPosts(dto: { userId: string }) {
+  static async getAllPosts() {
     return await db.post.findMany({
-      where: {
-        userId: dto.userId,
-      },
       select: {
         id: true,
         content: true,
@@ -245,6 +242,33 @@ class CommunityService {
         },
       };
     });
+  }
+
+  static async postView(dto: { userId: string; postId: number }) {
+    try {
+      await db.ensurePostExists(dto.postId);
+      const postView = await db.postView.create({
+        data: {
+          postId: dto.postId,
+          userId: dto.userId,
+        },
+      });
+
+      if (!postView) throw new ValidationError("Post view creation failed");
+
+      const postViewCount = await db.postView.count({
+        where: {
+          postId: dto.postId,
+        },
+      });
+
+      return {
+        count: postViewCount,
+        message: "Api success full",
+      };
+    } catch (error: any) {
+      throw new ValidationError(error.message);
+    }
   }
 
   private static async updateLikeCount(

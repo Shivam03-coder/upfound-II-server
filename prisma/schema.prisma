@@ -20,6 +20,7 @@ model User {
     recruiter        Recruiter?
     profile          Profile?
     authProvider     AuthProvider @default(GOOGLE)
+    views            PostView[]
 
     @@map("users")
 }
@@ -394,11 +395,24 @@ model Post {
 
     media    Media[]
     comments Comment[]
+    views    PostView[]
 
     @@index([userId])
     @@index([community])
     @@index([createdAt])
     @@map("posts")
+}
+
+model PostView {
+    id       Int      @id @default(autoincrement())
+    viewedAt DateTime @default(now())
+
+    User   User?   @relation(fields: [userId], references: [id])
+    userId String?
+    postId Int
+    Post   Post    @relation(fields: [postId], references: [id])
+
+    @@map("post_views")
 }
 
 model Media {
