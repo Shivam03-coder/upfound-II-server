@@ -66,5 +66,27 @@ export const db = new PrismaClient().$extends({
 
       return post?.userId === userId ? "Author" : "User";
     },
+
+    async ensureRecruiterExist(userId: string) {
+      const recruiter = await db.recruiter.findUnique({
+        where: { id: userId },
+        select: { id: true, companyProfile: { select: { id: true } } },
+      });
+
+      if (!recruiter) {
+        throw new NotFoundError(`Recruiter with ID ${userId} not found`);
+      }
+
+      if (!recruiter.companyProfile) {
+        throw new NotFoundError(
+          `Company profile not found for recruiter ${userId}`
+        );
+      }
+
+      return {
+        recruiterId: recruiter.id,
+        companyId: recruiter.companyProfile.id,
+      };
+    },
   },
 });

@@ -224,7 +224,7 @@ model Recruiter {
     communityProfileId String?
     createdAt          DateTime        @default(now())
     updatedAt          DateTime        @updatedAt
-    company            CompanyProfile? @relation("RecuirterToCompanyProfile")
+    companyProfile     CompanyProfile? @relation("RecruiterToCompanyProfile")
     jobCreated         Job[]
 
     @@map("recruiters")
@@ -252,7 +252,7 @@ model CompanyProfile {
     updatedAt          DateTime  @updatedAt
     jobs               Job[]
     recruiterId        String    @unique
-    recruiter          Recruiter @relation("RecuirterToCompanyProfile", fields: [recruiterId], references: [id], onDelete: Cascade)
+    recruiter          Recruiter @relation("RecruiterToCompanyProfile", fields: [recruiterId], references: [id], onDelete: Cascade)
 
     @@map("company_profiles")
 }
@@ -261,7 +261,6 @@ model CompanyProfile {
 
 model Job {
     id             String    @id @default(uuid())
-    role           String
     jobRole        String
     jobDescription String
     typeOfPosition String
@@ -286,21 +285,31 @@ model Job {
     recruiterId             String
     recruiter               Recruiter                @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
     JobApplicationQuestions JobApplicationQuestions?
-    JobsRequiredSkills      JobsRequiredSkills?
+    skills                  JobSkill[]
 
     @@map("jobs")
+}
+
+model Skill {
+    id   String     @id @default(uuid())
+    name String     @unique
+    jobs JobSkill[]
+}
+
+model JobSkill {
+    jobId   String
+    skillId String
+
+    job   Job   @relation(fields: [jobId], references: [id], onDelete: Cascade)
+    skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+    @@id([jobId, skillId])
 }
 
 model JobApplicationQuestions {
     id        String   @id @default(uuid())
     job       Job      @relation(fields: [id], references: [id])
     questions String[]
-}
-
-model JobsRequiredSkills {
-    id     String   @id @default(uuid())
-    job    Job      @relation(fields: [id], references: [id])
-    skills String[]
 }
 
 model JobToApplicant {
