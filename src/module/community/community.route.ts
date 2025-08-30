@@ -14,6 +14,7 @@ communityRouter.post("/reply/:postId/comment/:parentId",uploader,CommunityContro
 communityRouter.get("/comment/:postId",CommunityController.getAllCommentsHandler);
 communityRouter.patch("/like/:entityId/type/:entityType",CommunityController.toggleLikeDislikeHandler);
 communityRouter.patch("/post/:postId/view",CommunityController.postViewHandler); // POST VIEW
+communityRouter.get("/post/popular",CommunityController.getPopularPostsHandler); // POPULAR POST
 
 export default communityRouter;
 

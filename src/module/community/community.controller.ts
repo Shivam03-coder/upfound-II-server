@@ -161,6 +161,15 @@ class CommunityController {
       res.status(200).json(new ApiResponse(resp.message, resp.count));
     }
   );
+
+  static getPopularPostsHandler = AsyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const resp = await CommunityService.popularPost();
+      res
+        .status(200)
+        .json(new ApiResponse("Popular post fetched succesfully", resp));
+    }
+  );
 }
 
 export default CommunityController;

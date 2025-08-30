@@ -271,6 +271,60 @@ class CommunityService {
     }
   }
 
+  static async popularPost() {
+    const posts = await db.post.findMany({
+      include: {
+        _count: {
+          select: { views: true },
+        },
+        user: {
+          select: {
+            id: true,
+            profile: {
+              select: {
+                name: true,
+                profilePicture: true,
+              },
+            },
+          },
+        },
+        media: {
+          select: {
+            mediaType: true,
+            url: true,
+          },
+        },
+      },
+      orderBy: {
+        views: {
+          _count: "desc",
+        },
+      },
+    });
+  
+    const formattedPosts = posts.map((post) => ({
+      id: post.id,
+      content: post.content,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      likeCount: post.likeCount,
+      community: post.community,
+      viewCount: post._count.views,
+      media: post.media.map((m) => ({
+        mediaType: m.mediaType,
+        url: m.url,
+      })),
+      user: {
+        id: post.user.id,
+        name: post.user.profile?.name,
+        profilePicture: post.user.profile?.profilePicture,
+      },
+    }));
+  
+    return formattedPosts;
+  }
+  
+
   private static async updateLikeCount(
     tx: Prisma.TransactionClient,
     entityId: number,
