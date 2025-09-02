@@ -35,6 +35,36 @@ export const db = new PrismaClient().$extends({
           jobSeekerId: jobSeeker.id,
         };
       },
+
+      async checkIfUserHaveResume(userId: string) {
+        const { jobSeekerId } = await this.getJobSeekerId(userId);
+        const doc = await db.jobSeekerDocument.findFirst({
+          where: {
+            jobSeekerId,
+          },
+        });
+
+        return {
+          resumeUrl: doc?.documentUrl,
+          docType: doc?.documentType,
+          uploadedAt: doc?.createdAt,
+        };
+      },
+    },
+
+    job: {
+      async ensureJobExist(jobId: string) {
+        const job = await db.job.findFirst({
+          where: { id: jobId },
+          select: { id: true },
+        });
+
+        if (!job) {
+          throw new NotFoundError(`Job with ID ${jobId} not found `);
+        }
+
+        return job.id;
+      },
     },
   },
   client: {

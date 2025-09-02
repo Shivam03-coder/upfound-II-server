@@ -4,8 +4,10 @@ import {
   getAuth,
 } from "@src/common/utils/api.utils";
 import { Request, Response } from "express";
-import { CreateJobDTO } from "./job.dto";
+import { CreateJobDTO, JobApplyDto } from "./job.dto";
 import JobService from "./job.service";
+import { getResumeUrl } from "@src/common/utils/get-resume-url.utils";
+import parseAnswers from "@src/common/utils/parse-answers.utils";
 
 class JobController {
   public static createJobHandler = AsyncHandler(
@@ -17,15 +19,30 @@ class JobController {
     }
   );
 
+  public static editJobHandler = AsyncHandler(
+    async (req: Request, res: Response) => {
+      const { jobId } = req.params;
+      const data = req.body as CreateJobDTO;
+      const resp = await JobService.editJob({ dto: data, jobId });
+      res.status(200).json(new ApiResponse(resp.message, resp.job));
+    }
+  );
+  public static applyForJobHandler = AsyncHandler(
+    async (req: Request, res: Response) => {
+      const { jobId } = req.params;
+      const { userId } = await getAuth(req);
+      const data = req.body as JobApplyDto;
+      const resumeUrl = await getResumeUrl(data.resumeUrl, req);
+      const answers = parseAnswers(data.answerRaw);
+      // res.status(200).json(new ApiResponse(resp.message, resp.job));
+    }
+  );
+
   public static getJobApplicantsHandler = AsyncHandler(
     async (req: Request, res: Response) => {}
   );
 
   public static getCandidateHandler = AsyncHandler(
-    async (req: Request, res: Response) => {}
-  );
-
-  public static editJobHandler = AsyncHandler(
     async (req: Request, res: Response) => {}
   );
 

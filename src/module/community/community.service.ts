@@ -112,6 +112,49 @@ class CommunityService {
             profile: {
               select: { name: true, profilePicture: true },
             },
+            experience: {
+              select: {
+                workExperiences: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  }
+
+  static async getUserPosts({ userId }: { userId: string }) {
+    return await db.post.findMany({
+      where: {
+        userId,
+      },
+      select: {
+        id: true,
+        content: true,
+        createdAt: true,
+        likeCount: true,
+        updatedAt: true,
+        community: true,
+        media: {
+          select: {
+            mediaType: true,
+            url: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            profile: {
+              select: { name: true, profilePicture: true },
+            },
+            experience: {
+              select: {
+                workExperiences: true,
+              },
+            },
           },
         },
       },
@@ -301,7 +344,7 @@ class CommunityService {
         },
       },
     });
-  
+
     const formattedPosts = posts.map((post) => ({
       id: post.id,
       content: post.content,
@@ -320,10 +363,9 @@ class CommunityService {
         profilePicture: post.user.profile?.profilePicture,
       },
     }));
-  
+
     return formattedPosts;
   }
-  
 
   private static async updateLikeCount(
     tx: Prisma.TransactionClient,

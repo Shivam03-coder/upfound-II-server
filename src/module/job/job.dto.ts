@@ -20,3 +20,10 @@ export interface CreateJobDTO {
   jobApplicationQuestions?: string[];
   requiredSkills?: string[];
 }
+
+export interface JobApplyDto {
+  answerRaw: unknown;
+  resumeUrl?: string;
+  jobId: string;
+  userId?: string;
+}

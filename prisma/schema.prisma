@@ -287,6 +287,8 @@ model Job {
     JobApplicationQuestions JobApplicationQuestions?
     skills                  JobSkill[]
 
+    applicants JobToApplicant[]
+
     @@map("jobs")
 }
 
@@ -314,10 +316,12 @@ model JobApplicationQuestions {
 
 model JobToApplicant {
     id              String           @id @default(uuid())
-    jobId           String
     applicantId     String
     jobStatus       JobStatus
     JobApplications JobApplications?
+
+    jobId String
+    Job   Job    @relation(fields: [jobId], references: [id])
 
     @@map("job_to_applicants")
 }
@@ -325,7 +329,7 @@ model JobToApplicant {
 model JobApplications {
     id               String         @id @default(uuid())
     resume           String
-    answer           String[]
+    answers          String[]
     createdAt        DateTime       @default(now())
     updatedAt        DateTime       @updatedAt
     jobToApplicantId String         @unique

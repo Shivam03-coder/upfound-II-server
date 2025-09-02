@@ -61,8 +61,15 @@ class CommunityController {
   static getAllPostHandler = AsyncHandler(
     async (req: Request, res: Response): Promise<void> => {
       const response = await CommunityService.getAllPosts();
-
       res.json(new ApiResponse("All posts fetched succesfully", response));
+    }
+  );
+
+  static getUserPostHandler = AsyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const { userId } = await getAuth(req);
+      const response = await CommunityService.getUserPosts({ userId });
+      res.json(new ApiResponse("All posts fetched for user succesfully", response));
     }
   );
 
