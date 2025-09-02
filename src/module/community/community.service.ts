@@ -164,6 +164,48 @@ class CommunityService {
     });
   }
 
+  static async getPostByCommunity({
+    communityName,
+  }: {
+    communityName: CommunityType;
+  }) {
+    return await db.post.findMany({
+      where: {
+        community: communityName,
+      },
+      select: {
+        id: true,
+        content: true,
+        createdAt: true,
+        likeCount: true,
+        updatedAt: true,
+        community: true,
+        media: {
+          select: {
+            mediaType: true,
+            url: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            profile: {
+              select: { name: true, profilePicture: true },
+            },
+            experience: {
+              select: {
+                workExperiences: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  }
+
   static async createComment(dto: CommentsData) {
     const postId = await db.ensurePostExists(dto.postId!);
     const role = await db.isAuthor(dto.postId!, dto.userId!);

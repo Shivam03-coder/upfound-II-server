@@ -11,6 +11,7 @@ import {
 } from "./community.dto";
 import { s3Service } from "@src/common/libs/s3";
 import CommunityService from "./community.service";
+import { CommunityType } from "@prisma/client";
 
 class CommunityController {
   static createPostHanlder = AsyncHandler(
@@ -70,6 +71,12 @@ class CommunityController {
       const { userId } = await getAuth(req);
       const response = await CommunityService.getUserPosts({ userId });
       res.json(new ApiResponse("All posts fetched for user succesfully", response));
+    }
+  );
+  static getPostByCommunityHandler = AsyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const response = await CommunityService.getPostByCommunity({ communityName: req.params.communityName as CommunityType });
+      res.json(new ApiResponse("All posts fetched for community succesfully", response));
     }
   );
 

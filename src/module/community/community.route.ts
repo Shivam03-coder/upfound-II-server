@@ -10,6 +10,7 @@ communityRouter.delete("/post/:postId", CommunityController.deletePostHandler);
 communityRouter.put("/post/:postId", CommunityController.editPostHandler);
 communityRouter.get("/post", CommunityController.getAllPostHandler);
 communityRouter.get("/post/user", CommunityController.getUserPostHandler); // GET USER POSTS
+communityRouter.get("/post/community/:communityName", CommunityController.getPostByCommunityHandler); // GET POSTS BY COMMUNITY
 communityRouter.post("/comment/:postId",uploader,CommunityController.createCommentHandler);
 communityRouter.post("/reply/:postId/comment/:parentId",uploader,CommunityController.replyToCommentHandler);
 communityRouter.get("/comment/:postId",CommunityController.getAllCommentsHandler);
